@@ -1,4 +1,7 @@
 
+#ifndef __PVFM_UI_DFS_H__
+#define __PVFM_UI_DFS_H__
+
 // display temperature set
 #define LOCA_TEMP_SET_X     0
 #define LOCA_TEMP_SET_Y     0
@@ -69,3 +72,10 @@
 #define TS_MAXX 890*2
 #define TS_MINY 83*2
 #define TS_MAXY 913*2
+
+
+// setting mode, number
+#define SET_MODE_NUM_X  80
+#define SET_MODE_NUM_Y  18
+
+#endif

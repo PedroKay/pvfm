@@ -22,9 +22,7 @@
 
 #include <TFTv2.h>
 #include <SPI.h>
-#define FONT_SPACE 6
-#define FONT_X 8
-#define FONT_Y 8
+
 
 void TFT::TFTinit (void)
 {

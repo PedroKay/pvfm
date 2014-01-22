@@ -107,6 +107,11 @@
 #define INT16U unsigned int
 #endif
 
+#define FONT_SPACE 6
+#define FONT_X 8
+#define FONT_Y 8
+
+
 extern INT8U simpleFont[][8];
 
 class TFT

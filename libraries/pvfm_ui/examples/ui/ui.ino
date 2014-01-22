@@ -13,31 +13,17 @@ void setup()
     
     UI.begin();
     
-    
     UI.dispSetMode();
 }
 
 long timer_tmp = 0;
 
 int st_buf = 0;
+
+int st_buf_ = 0;
 void loop()
 {
 
-    st_buf = UI.getTouchItem();
-    if(st_buf)
-    {
-        timer_tmp = millis();
-        cout << st_buf << endl;
-        
-        for(;;)
-        {
-            if(st_buf == UI.getTouchItem())
-            {
-                timer_tmp = millis();
-                delay(1);
-            }
-            
-            if(millis()-timer_tmp > 100)break;
-        }
-    }
+    UI.setNum(50);
+
 }
