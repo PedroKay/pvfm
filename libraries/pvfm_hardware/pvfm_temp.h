@@ -71,7 +71,7 @@ private:
     
     // user interfaces
     public:
-
+    
     PVFM_Temp_new(int pin_k, int pin_n);
     // return temperature
     float get_kt();
