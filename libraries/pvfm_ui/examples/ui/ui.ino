@@ -22,6 +22,8 @@ long timer_tmp = 0;
 int st_buf = 0;
 
 int st_buf_ = 0;
+
+long timer1 = 0;
 void loop()
 {
 
@@ -39,4 +41,15 @@ void loop()
         UI.setValue(val_b, item-1);
         UI.normalPage();
     }
+    
+    if(millis()-timer1 > 1000)
+    {
+        timer1 = millis();
+        int tp = 290+random(0, 20);
+        
+        UI.setTempNow(tp);
+        UI.updateTemp();
+    }
+    
+    
 }

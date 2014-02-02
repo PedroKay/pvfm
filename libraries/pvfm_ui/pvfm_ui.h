@@ -12,6 +12,7 @@ private:
     
 
     int value[4];
+    int temp_now_buf;
     
     
 private:
@@ -32,8 +33,10 @@ public:
     void begin();
     unsigned int setNum(int num_input, int _min, int _max);                 // set number
     unsigned char getTouchItem();
+    unsigned char updateTemp();                                             // refresh temperature
     
     void normalPage();                                                      // normal page
+    void setTempNow(int tpn);                                               // set temprature now
     
     void setValue(int val, int which_val);                                  // set value
     int getVal(int wh_val);                                                 // get value

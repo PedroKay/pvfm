@@ -15,13 +15,14 @@ void pvfm_ui::begin()
     TFT_BL_ON;          // turn on the background light
     Tft.TFTinit();      // init TFT library
     
-    
     num_set = 0;
     
     value[0] = 300;
     value[1] = 250;
     value[2] = 20;
     value[3] = 12;
+    
+    temp_now_buf = value[1];
 
 }
 
@@ -34,6 +35,18 @@ void pvfm_ui::updateValue()
     {
         Tft.drawNumber(value[i], 120, 64*i+yoffset, 3, make_color(0, 0, 0));
     }
+}
+
+void pvfm_ui::setTempNow(int tpn)                                               // set temprature now
+{
+    temp_now_buf = value[1];
+    value[1] = tpn;
+}
+
+unsigned char pvfm_ui::updateTemp()                                             // refresh temperature
+{
+    int clr = make_color(COLOR_TEMP_NOW_R, COLOR_TEMP_NOW_G, COLOR_TEMP_NOW_B);
+    dispNum(value[1], temp_now_buf, 120, 64+20, 3, make_color(0, 0, 0), clr);
 }
 
 void pvfm_ui::normalPage()
@@ -103,6 +116,8 @@ bool pvfm_ui::getTouchRect(int XL, int YU, int XR, int YD)
     if(p.x > XL && p.x < XR && p.y > YU && p.y < YD)return 1;
     return 0;
 }
+
+
 
 unsigned char pvfm_ui::getTouchItem()
 {
@@ -183,35 +198,24 @@ unsigned int pvfm_ui::setNum(int num_input, int _min, int _max)
     dispSetMode();
     
     unsigned long timer_tmp = millis();
-    
     int num_buf = num_input+111;
     
     Tft.fillRectangle(0, 0, 240, 60, make_color(255, 255, 255));            // display
     dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));
     
-    while(1)
+    for(;;)
     {
+        long timer_1 = millis();
+        long timer_2 = timer_1;
+        int speed_cnt = 100;
+        timer_tmp = millis();
+            
         if(getTouchRect(10, 120, 90, 200))            // up
         {
-#if __UIDBG
-            cout << "up" << endl;
-#endif  
-            timer_tmp = millis();
-            
-            
+
             num_buf = num_input;
-            
-            if(num_input < _max)
-            {
-                num_input++;
-            }
-            
+            num_input = num_input<_max ? num_input+1 : num_input;
             dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));
-            
-#if __UIDBG
-            cout << num_input << endl;
-#endif  
-            
 
             for(;;)
             {
@@ -221,32 +225,34 @@ unsigned int pvfm_ui::setNum(int num_input, int _min, int _max)
                     delay(1);
                 }
                 
-                
-                if(millis()-timer_tmp > 100)break;
-                
+                if(millis()-timer_tmp > 100)break;                          // release for 100ms , that is released
+                else
+                {
+                    if(millis()-timer_1 > 500 && (millis() - timer_2 > speed_cnt))
+                    {
+                        timer_2 = millis();
+                        num_buf = num_input;
+                        num_input = num_input < _max ? num_input+1 : num_input;
+                        dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));            
+
+                        //speed_cnt = speed_cnt > 20 ? (speed_cnt>90 ? speed_cnt-1 : (speed_cnt > 50 ? speed_cnt-3 : speed_cnt - 5)) : speed_cnt;
+                        
+                        if(speed_cnt > 100-8)speed_cnt -= 1;                   // speed faster
+                        else if(speed_cnt > 100-16) speed_cnt -= 2;
+                        else if(speed_cnt > 100-32) speed_cnt -= 4;
+                        else speed_cnt -= 8;
+                        
+                        speed_cnt = speed_cnt<10 ? 10 : speed_cnt;
+                    }
+                }
             }
         }
         else if(getTouchRect(150, 120, 230, 200))           // down
         {
-#if __UIDBG
-            cout << "down" << endl;
-#endif
-            timer_tmp =  millis();
-            //timer_tmp1 = millis();
-            
             num_buf = num_input;
-            
-            if(num_input > _min)
-            {
-                num_input--;
-            }
-            
+            num_input = num_input>_min ? num_input-1 : num_input;
             dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));
-            
-            if(num_input < 0)num_input = 0;
-#if __UIDBG
-            cout << num_input << endl;
-#endif
+
             for(;;)
             {
                 if(getTouchRect(150, 120, 230, 200))
@@ -255,14 +261,29 @@ unsigned int pvfm_ui::setNum(int num_input, int _min, int _max)
                     delay(1);
                 }
                 
-                if(millis()-timer_tmp > 50)break;
+                if(millis()-timer_tmp > 100)break;                          // release for 100ms , that is released
+                else
+                {
+                    if(millis()-timer_1 > 500 && (millis() - timer_2 > speed_cnt))
+                    {
+                        timer_2 = millis();
+                        num_buf = num_input;
+                        num_input = num_input > _min ? num_input-1 : num_input;
+                        dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));     
+
+                        
+                        if(speed_cnt > 100-8)speed_cnt -= 1;                   // speed faster
+                        else if(speed_cnt > 100-16) speed_cnt -= 2;
+                        else if(speed_cnt > 100-32) speed_cnt -= 4;
+                        else speed_cnt -= 8;
+                        
+                        speed_cnt = speed_cnt<10 ? 10 : speed_cnt;
+                    }
+                }
             }
         }
         else if(getTouchRect(0, 320-60, 239, 320))
         {
-#if __UIDBG
-            cout << "return" << endl;
-#endif
             timer_tmp = millis();
 
             for(;;)
