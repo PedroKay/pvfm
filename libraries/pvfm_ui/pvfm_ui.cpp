@@ -122,7 +122,7 @@ unsigned char pvfm_ui::getTouchItem()
     }
     else if(p.y < LOCA_TIME1_Y)
     {
-        return 2;
+        return 0;
     }
     else if(p.y < LOCA_TIME2_Y)
     {
