@@ -2,32 +2,42 @@
 #ifndef __PVFM_UI_H__
 #define __PVFM_UI_H__
 
+#define __UIDBG     0
+
 class pvfm_ui{
 
 private:
-
-    
-    
+   
     int num_set;
+    
 
+    int value[4];
+    
+    
+private:
+
+    void dispSetMode();
+    unsigned int make_color(unsigned char r, unsigned char g, unsigned char b);         // make rgb to 565 color
+    
+    bool isTouch();
+    bool getTouchRect(int XL, int YU, int XR, int YD);                                  // if certain rect get touched
+    
+    
+    void dispNum(int num, int num_buf, int x, int y, int size, int color, int color_bk);
+    
+    void updateValue();
     
 public:
 
     void begin();
-    
-    unsigned int make_color(unsigned char r, unsigned char g, unsigned char b);
-    
-    bool isTouch();
-    bool getTouchRect(int XL, int YU, int XR, int YD);
-    
+    unsigned int setNum(int num_input, int _min, int _max);                 // set number
     unsigned char getTouchItem();
     
-    void dispSetMode();
+    void normalPage();                                                      // normal page
     
-    unsigned int setNum(int num_input);
-    
-    
-    void dispNum(int num, int num_buf, int x, int y, int size, int color, int color_bk);
+    void setValue(int val, int which_val);                                  // set value
+    int getVal(int wh_val);                                                 // get value
+
 };
 
 

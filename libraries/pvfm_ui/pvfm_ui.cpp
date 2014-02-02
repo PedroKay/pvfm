@@ -18,7 +18,26 @@ void pvfm_ui::begin()
     
     num_set = 0;
     
-   /*
+    value[0] = 300;
+    value[1] = 250;
+    value[2] = 20;
+    value[3] = 12;
+
+}
+
+
+void pvfm_ui::updateValue()
+{
+    int yoffset = 20;
+
+    for(int i=0; i<4; i++)
+    {
+        Tft.drawNumber(value[i], 120, 64*i+yoffset, 3, make_color(0, 0, 0));
+    }
+}
+
+void pvfm_ui::normalPage()
+{
     int color_g = make_color(COLOR_TEMP_SET_R, COLOR_TEMP_SET_G, COLOR_TEMP_SET_B);
     Tft.fillRectangle(LOCA_TEMP_SET_X, LOCA_TEMP_SET_Y, 240, 64, color_g);
     
@@ -33,8 +52,25 @@ void pvfm_ui::begin()
     
     color_g = make_color(COLOR_STATUS_R, COLOR_STATUS_G, COLOR_STATUS_B);
     Tft.fillRectangle(LOCA_STATUS_X, LOCA_STATUS_Y, 240, 64, color_g);
-*/
+    
+    updateValue();
 }
+
+int pvfm_ui::getVal(int wh_val)
+{
+    if(wh_val > 3 || wh_val < 0)return -1;
+    
+    return value[wh_val];
+}
+
+
+void pvfm_ui::setValue(int val, int which_val)                                   // set value
+{
+    if(which_val > 3 || which_val < 0)return;
+    
+    value[which_val] = val;
+}
+
 
 unsigned int pvfm_ui::make_color(unsigned char r, unsigned char g, unsigned char b)
 {
@@ -140,12 +176,13 @@ void pvfm_ui::dispSetMode()
 }
 
 
-unsigned int pvfm_ui::setNum(int num_input)
+unsigned int pvfm_ui::setNum(int num_input, int _min, int _max)
 {
     if(num_input < 0)return -1;
     
-    unsigned long timer_tmp = millis();
+    dispSetMode();
     
+    unsigned long timer_tmp = millis();
     
     int num_buf = num_input+111;
     
@@ -156,18 +193,24 @@ unsigned int pvfm_ui::setNum(int num_input)
     {
         if(getTouchRect(10, 120, 90, 200))            // up
         {
+#if __UIDBG
             cout << "up" << endl;
-            
+#endif  
             timer_tmp = millis();
             
+            
             num_buf = num_input;
-            num_input++;
+            
+            if(num_input < _max)
+            {
+                num_input++;
+            }
             
             dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));
             
-            
+#if __UIDBG
             cout << num_input << endl;
-            
+#endif  
             
 
             for(;;)
@@ -185,19 +228,25 @@ unsigned int pvfm_ui::setNum(int num_input)
         }
         else if(getTouchRect(150, 120, 230, 200))           // down
         {
+#if __UIDBG
             cout << "down" << endl;
-            
+#endif
             timer_tmp =  millis();
             //timer_tmp1 = millis();
             
             num_buf = num_input;
-            num_input--;
+            
+            if(num_input > _min)
+            {
+                num_input--;
+            }
             
             dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));
             
             if(num_input < 0)num_input = 0;
+#if __UIDBG
             cout << num_input << endl;
-            
+#endif
             for(;;)
             {
                 if(getTouchRect(150, 120, 230, 200))
@@ -211,8 +260,9 @@ unsigned int pvfm_ui::setNum(int num_input)
         }
         else if(getTouchRect(0, 320-60, 239, 320))
         {
+#if __UIDBG
             cout << "return" << endl;
-            
+#endif
             timer_tmp = millis();
 
             for(;;)

@@ -13,7 +13,8 @@ void setup()
     
     UI.begin();
     
-    UI.dispSetMode();
+    UI.normalPage();
+ 
 }
 
 long timer_tmp = 0;
@@ -24,6 +25,18 @@ int st_buf_ = 0;
 void loop()
 {
 
-    UI.setNum(50);
-
+    //int a = UI.setNum(50, 40, 60);
+    
+   // cout << "num set to = " << a << endl;
+   
+    
+    int item = UI.getTouchItem();
+    
+    if(item > 0)
+    {
+        int val_b = UI.getVal(item-1);
+        val_b = UI.setNum(val_b, 10, 500);
+        UI.setValue(val_b, item-1);
+        UI.normalPage();
+    }
 }
