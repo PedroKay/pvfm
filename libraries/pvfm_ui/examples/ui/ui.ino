@@ -1,7 +1,10 @@
 #include <Streaming.h>
 #include <TFTv2.h>
 #include <SPI.h>
+#include <EEPROM.h>
 #include <SeeedTouchScreen.h>
+
+#include <pvfm_dta.h>
 
 #include "pvfm_ui.h"
 #include "pvfm_ui_dfs.h"
