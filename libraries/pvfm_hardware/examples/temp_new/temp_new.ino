@@ -1,27 +1,33 @@
 //
-
+#include <MsTimer2.h>
 #include <Streaming.h>
-#include "pvfm_temp_new.h"
+#include <EEPROM.h>
+#include "pvfm_temp.h"
 
-PVFM_Temp_new tp(A5, A4);
 
 void setup()
 {
     Serial.begin(115200);
     
     cout << "hello world" << endl;
+    
+    
+    //ptp.makeArray();
+    
+    ptp.begin();
+    ptp.setTemp(100);
+    
 }
 
 
 long timer1 = 0;
 void loop()
 {
-    tp.pushDta();
+    //ptp.pushDta();
     delay(1);
-    
     if((millis() - timer1) > 200)
     {
         timer1 = millis();
-        cout << tp.get_kt() << '\t' << tp.get_nt() << endl;
+        cout << ptp.get_kt() << endl;
     }
 }

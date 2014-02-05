@@ -31,6 +31,7 @@
 
 #include <Arduino.h>
 #include <Streaming.h>
+#include <EEPROM.h>
 
 #define K_TEMP          A0
 #define N_TEMP          A1
@@ -38,11 +39,14 @@
 #define numReadings     32
 #define numReadings_2   5
 
-#define Av_Amplifer     54.16
-#define BiasVol         327         // mv
+#define Av_Amplifer     192
+
+#define BiasVol         0         // mv
 
 #define V_ref           5000        // mv
 
+
+#define EEPROM_ADDR_START   200
 
 class PVFM_Temp{
 
@@ -58,29 +62,52 @@ private:
     int average_buf;                            // average data buf
     
     int temp_set;                               // temp set
+    int temp_set_2;
+    
+    
+    bool flg_heat;
+    
+    int __temp_n;
 
-private:
+public:
 
-    // mv -> temperature
-    float K_VtoT(float mV);
+    
+    float K_VtoT(float mV);                     // mv -> temperature
+
+    
     // get analog data
     int getAnalog(int pin);
     
     // init buff
     void initDta();
     
-    // user interfaces
-    public:
+    void write_word_eeprom(int addr, unsigned int dta)
+    {
+        EEPROM.write(addr, dta>>8);
+        EEPROM.write(addr+1, dta);
+    }
     
-    PVFM_Temp_new(int pin_k, int pin_n);
+    unsigned int get_word_eeprom(int addr){return (unsigned int)EEPROM.read(addr)<<8 | EEPROM.read(addr+1);}
+    
+    
+    // user interfaces
+public:
+    
+    void begin();
+    void makeArray();
+    void getArray();
+
     // return temperature
     float get_kt();
     // push data, 1ms per time
     int pushDta();
     float get_nt();
     
+    void setTemp(int tpr);                           // set temperature
     
-    void setTemp(int tpr){temp_set = tpr};      // set temperature
+    void __timer_isr();             // 5ms
 };
 
+
+extern PVFM_Temp ptp;
 #endif
