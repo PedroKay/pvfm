@@ -1,11 +1,46 @@
+/*
+  pvfm_temp.cpp
+
+  Author:Loovee
+  2013-12-31
+
+  The MIT License (MIT)
+  Copyright (c) 2013 Seeed Technology Inc.
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+*/
+
 #include <MsTimer2.h>
 
 #include "pvfm_temp.h"
 
-#define __PIN_K     A0
 #define __PIN_N     A1
 
-float Var_VtoT_K[3][10]=
+#define __PIN_K0    A0
+#define __PIN_K1    A2
+#define __PIN_K2    A3
+
+#define __PINSSR0   5
+#define __PINSSR1   6
+#define __PINSSR2   7
+
+const float Var_VtoT_K[3][10]=
 {
     {0, 2.5173462e1, -1.1662878, -1.0833638, -8.9773540/1e1, -3.7342377/1e1,
     -8.6632643/1e2, -1.0450598/1e2, -5.1920577/1e4},
@@ -14,9 +49,6 @@ float Var_VtoT_K[3][10]=
     {-1.318058e2, 4.830222e1, -1.646031, 5.464731/1e2, -9.650715/1e4,
     8.802193/1e6, -3.110810/1e8}
 };
-
-// Corresponding analog value of 50-550, per 1oC. such as xxx[0] means analogValue of 50,
-// xxx[10] means analogValue of 50+5*10 = 100oC
 
 float val_T2V[101] =
 {
@@ -33,19 +65,21 @@ float val_T2V[101] =
     22.77,                                                                                          // 550
 };
 
-unsigned int temp_2_analog[101] = 
+// Corresponding analog value of 50-550, per 5oC. such as xxx[0] means analogValue of 50,
+// xxx[10] means analogValue of 50+5*10 = 100oC
+unsigned int temp_2_analog[101] =
 {
-    79,	    87,	    95,	    103,	111,	120,	128,	136,	144,	152,				// 50 - 95
-    161,	168,	177,	185,	193,	201,	209,	217,	225,	233,				// 100 - 145
-    241,	249,	256,	264,	272,	280,	288,	296,	304,	311,				// 150 - 195
-    319,	327,	335,	343,	351,	359,	366,	374,	383,	390,				// 200 - 245
-    398,	406,	414,	423,	430,	439,	447,	455,	463,	471,				// 250 - 295
-    479,	487,	495,	504,	512,	520,	528,	537,	544,	553,				// 300 - 345
-    561,	569,	577,	586,	594,	602,	610,	619,	627,	635,				// 350 - 395
-    644,	652,	660,	668,	677,	685,	694,	702,	710,	718,				// 400 - 445
-    727,	735,	744,	752,	760,	769,	777,	786,	794,	802,				// 450 - 495
-    810,	819,	827,	835,	844,	852,	861,	869,	877,	886,				// 500 - 545
-894
+    79,     87,     95,     103,    111,    120,    128,    136,    144,    152,                    // 50 - 95
+    161,    168,    177,    185,    193,    201,    209,    217,    225,    233,                    // 100 - 145
+    241,    249,    256,    264,    272,    280,    288,    296,    304,    311,                    // 150 - 195
+    319,    327,    335,    343,    351,    359,    366,    374,    383,    390,                    // 200 - 245
+    398,    406,    414,    423,    430,    439,    447,    455,    463,    471,                    // 250 - 295
+    479,    487,    495,    504,    512,    520,    528,    537,    544,    553,                    // 300 - 345
+    561,    569,    577,    586,    594,    602,    610,    619,    627,    635,                    // 350 - 395
+    644,    652,    660,    668,    677,    685,    694,    702,    710,    718,                    // 400 - 445
+    727,    735,    744,    752,    760,    769,    777,    786,    794,    802,                    // 450 - 495
+    810,    819,    827,    835,    844,    852,    861,    869,    877,    886,                    // 500 - 545
+    894,                                                                                            // 550
 };
 
 void timer3_isr()
@@ -54,59 +88,79 @@ void timer3_isr()
 }
 
 // 5ms
+
+unsigned char choose_k_cnt = 0;
+
 void PVFM_Temp::__timer_isr()
 {
-    pushDta();
+    choose_k_cnt = choose_k_cnt>=(NUM_SENSOR-1) ? 0 : choose_k_cnt+1;
+
+    pushDta(choose_k_cnt);
     
-    if(flg_heat == 0 && average < (temp_set_2-3))
+    if(flg_heat[choose_k_cnt] == 0 && average[choose_k_cnt] < (temp_set_2-3))
     {
-        flg_heat = 1;
-        
-        cout << "average = " << average << '\t';
+        flg_heat[choose_k_cnt] = 1;
+        digitalWrite(__pin_ssr[choose_k_cnt], HIGH);
+
+        cout << "average[" << choose_k_cnt << "] =" << average[choose_k_cnt] << '\t';
         cout << "temp_set_2 = " << temp_set_2 << endl;
-        
+
         Serial.println("ssr on");
     }
-    else if(flg_heat == 1 && average > (temp_set_2+3))
+    else if(flg_heat[choose_k_cnt] == 1 && average[choose_k_cnt] > (temp_set_2+3))
     {
-        flg_heat = 0;
-        cout << "average = " << average << '\t';
-        cout << "temp_set_2 = " << temp_set_2 << endl;
+        flg_heat[choose_k_cnt] = 0;
+        digitalWrite(__pin_ssr[choose_k_cnt], LOW);
         
+        cout << "average[" << choose_k_cnt << "] =" << average[choose_k_cnt] << '\t';
+        cout << "temp_set_2 = " << temp_set_2 << endl;
+
         Serial.println("ssr off");
     }
 }
 
 void PVFM_Temp::begin()
 {
-    __pin_k = __PIN_K;
-    __pin_n = __PIN_N;
-    
 
-    index       = 0;                        // the index of the current reading
-    total       = 0;                        // the running total
-    average     = 0;                        // the average
-    average_buf = 0;
-
-    temp_set    = 0;                        // default value: 0oC
-    temp_set_2  = temp_2_analog[0];
-
-    initDta();
-
-    __temp_n = 0;
-    
-    for(int i=0; i<32; i++)
+    for(int i=0; i<NUM_SENSOR; i++)
     {
-        __temp_n += get_nt();
+        index[i]       = 0;                         // the index of the current reading
+        total[i]       = 0;                         // the running total
+        average[i]     = 0;                         // the average
+    }
+    temp_set    = 0;                                // default value: 0oC
+    temp_set_2  = temp_2_analog[0];
+    
+    
+    __pin_k[0] = __PIN_K0;
+    __pin_k[1] = __PIN_K1;
+    __pin_k[2] = __PIN_K2;
+    
+    __pin_ssr[0] = __PIN_SSR0;
+    __pin_ssr[1] = __PIN_SSR1;
+    __pin_ssr[2] = __PIN_SSR2;
+    
+    for(int i=0; i<3; i++)
+    {
+        pinMode(__pin_ssr[i], OUTPUT);
+        digitalWrite(__pin_ssr[i], LOW);
+        flg_heat[i] = 0;
     }
     
-    __temp_n = __temp_n>>5;
-    
+    initDta();
+
+    long _temp_n_tmp = 0;
+
+    for(int i=0; i<256; i++)
+    {
+        _temp_n_tmp += get_nt();
+    }
+
+    __temp_n = _temp_n_tmp>>8;
+
     makeArray();
-    
+
     cout << "__temp_nxxx = " << __temp_n << endl;
-    
-    flg_heat    = 0;
 
     MsTimer2::set(5, timer3_isr); // 500ms period
     MsTimer2::start();
@@ -119,7 +173,6 @@ void PVFM_Temp::setTemp(int tpr)                           // set temperature
     temp_set_2  = temp_2_analog[temp_set_2];
 }
 
-
 void PVFM_Temp::makeArray()
 {
 
@@ -129,7 +182,7 @@ void PVFM_Temp::makeArray()
     {
         val_T2V[i] -= __temp_n*0.040295;
     }
-    
+
     for(int i=0; i<101; i++)
     {
         temp_2_analog[i] = val_T2V[i]/1000*Av_Amplifer*1023.0/__Vref;
@@ -139,17 +192,12 @@ void PVFM_Temp::makeArray()
     {
         for(int j=0; j<10; j++)
         {
-            cout << temp_2_analog[i*10+j] << ",\t";
+            // cout << temp_2_analog[i*10+j] << ",\t";
         }
-        cout << "\t\t\t// " << 50*i+50 << " - " << 50*i+95 << endl;
+        // cout << "\t\t\t// " << 50*i+50 << " - " << 50*i+95 << endl;
     }
 
-    cout << temp_2_analog[100] << endl;
-}
-
-void PVFM_Temp::getArray()
-{
-
+    // cout << temp_2_analog[100] << endl;
 }
 
 float PVFM_Temp::K_VtoT(float mV)
@@ -183,66 +231,52 @@ int PVFM_Temp::getAnalog(int pin)                         // return button state
     {
         sum += analogRead(pin);
     }
-
     return sum >> 3;
 }
 
 // init buff
 void PVFM_Temp::initDta()
 {
-    for(int i=0; i<numReadings; i++)
+    for(int i=0; i<3; i++)
     {
-        readings[i] = 0;
+        for(int j=0; j<numReadings; j++)
+        {
+            readings[i][j] = 0;
+        }
     }
 }
 
-
 // return temperature
-float PVFM_Temp::get_kt()
+float PVFM_Temp::get_kt(int inx)
 {
-
-    // float vol = (float)average/1023.0*5000.0 - BiasVol;
-
-    float vol = (float)average/1023.0*(float)V_ref;
-    
-    // cout << "average = " << average << endl;
-
-    //cout << "vol_adc = " << vol << " mV" << endl;
-
-    vol -= BiasVol;
-
-    //cout << "vin_alc = " << vol/Av_Amplifer << " mV" << endl;
-
+    if(inx >= NUM_SENSOR) return 0;
+    float vol = (float)average[inx]/1023.0*(float)V_ref - BiasVol;
     float temp = K_VtoT(vol/Av_Amplifer) + __temp_n;
     
-    
-    
-    // cout << "__temp_n = " << get_nt() << endl;
-    // float temp = __temp_n + K_VtoT(vol/Av_Amplifer);
-
     return temp;
 }
 
 // push data, 1ms per time
-int PVFM_Temp::pushDta()
+int PVFM_Temp::pushDta(int inx)
 {
-    total= total - readings[index];
-    // read from the sensor:
-    readings[index] = getAnalog(__pin_k);
-    // cout << "getAnalog = " << readings[index] << endl;
-
-    total = total + readings[index];
+    if(inx >= NUM_SENSOR) return 0;
     
-    index++;
-    index = index >= numReadings ? 0 : index;
-    average = (total >> numReadings_2);
+    total[inx] = total[inx] - readings[inx][index[inx]];
 
-    return average;
+    readings[inx][index[inx]] = getAnalog(__pin_k[inx]);
+
+    total[inx] = total[inx] + readings[inx][index[inx]];
+
+    index[inx]++;
+    index[inx] = index[inx] >= numReadings ? 0 : index[inx];
+    average[inx] = (total[inx] >> numReadings_2);
+
+    return average[inx];
 }
 
 float PVFM_Temp::get_nt()                                               // get temperature
 {
-    int a = getAnalog(__pin_n)*50/33;
+    int a = getAnalog(__PIN_N)*50/33;
 
     float resistance=(float)(1023-a)*10000/a;                           // get the resistance of the sensor;
     float temperature=1/(log(resistance/10000)/3975+1/298.15)-273.15;   // convert to temperature via datasheet ;

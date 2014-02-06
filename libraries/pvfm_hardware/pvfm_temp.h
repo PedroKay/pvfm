@@ -33,11 +33,8 @@
 #include <Streaming.h>
 #include <EEPROM.h>
 
-#define K_TEMP          A0
-#define N_TEMP          A1
-
-#define numReadings     32
-#define numReadings_2   5
+#define numReadings     16
+#define numReadings_2   4
 
 #define Av_Amplifer     192
 
@@ -48,24 +45,24 @@
 
 #define EEPROM_ADDR_START   200
 
+#define NUM_SENSOR      3
+
 class PVFM_Temp{
 
 private:
     
-    int __pin_k;                                // k type temperature sensor
-    int __pin_n;                                // normal temperature sensor
-    
-    int readings[numReadings];                  // the readings from the analog input
-    int index;                                  // the index of the current reading
-    long total;                                 // the running total
-    int average;                                // the average
-    int average_buf;                            // average data buf
-    
-    int temp_set;                               // temp set
+    int readings[NUM_SENSOR][numReadings];                  // the readings from the analog input
+    int index[NUM_SENSOR];                                  // the index of the current reading
+    long total[NUM_SENSOR];                                 // the running total
+    int average[NUM_SENSOR];                                // the average
+
+    int temp_set;                                           // temp set
     int temp_set_2;
     
+    int __pin_k[3];
+    int __pin_ssr[3];
     
-    bool flg_heat;
+    bool flg_heat[NUM_SENSOR];
     
     int __temp_n;
 
@@ -95,17 +92,12 @@ public:
     
     void begin();
     void makeArray();
-    void getArray();
 
-    // return temperature
-    float get_kt();
-    // push data, 1ms per time
-    int pushDta();
+    float get_kt(int inx);                              // return temperature
+    int pushDta(int inx);                               // push data, 5ms per time
     float get_nt();
-    
-    void setTemp(int tpr);                           // set temperature
-    
-    void __timer_isr();             // 5ms
+    void setTemp(int tpr);                              // set temperature
+    void __timer_isr();                                 // 5ms
 };
 
 

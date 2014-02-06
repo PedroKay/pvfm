@@ -28,6 +28,6 @@ void loop()
     if((millis() - timer1) > 200)
     {
         timer1 = millis();
-        cout << ptp.get_kt() << endl;
+        cout << ptp.get_kt(0) << endl;
     }
 }
