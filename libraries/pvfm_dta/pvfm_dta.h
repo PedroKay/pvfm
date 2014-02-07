@@ -11,7 +11,7 @@
 class pvfm_dta{
 
 private:
-
+    
     int temp_now;
     
     void write_word_eeprom(int addr, unsigned int dta);

@@ -52,8 +52,8 @@
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) // mega
 #define YP A2   // must be an analog pin, use "An" notation!
 #define XM A1   // must be an analog pin, use "An" notation!
-#define YM 54   // can be a digital pin, this is A0
-#define XP 57   // can be a digital pin, this is A3 
+#define YM A0   // can be a digital pin, this is A0
+#define XP A3   // can be a digital pin, this is A3 
 
 #elif defined(__AVR_ATmega32U4__) // leonardo
 #define YP A2   // must be an analog pin, use "An" notation!

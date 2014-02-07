@@ -27,8 +27,8 @@
 */
 
 #include <MsTimer2.h>
-
 #include "pvfm_temp.h"
+//#include "pvfm_dta.h"
 
 #define __PIN_N     A1
 
@@ -36,11 +36,11 @@
 #define __PIN_K1    A2
 #define __PIN_K2    A3
 
-#define __PINSSR0   5
-#define __PINSSR1   6
-#define __PINSSR2   7
+#define __PIN_SSR0   2
+#define __PIN_SSR1   2
+#define __PIN_SSR2   2
 
-const float Var_VtoT_K[3][10]=
+const float Var_VtoT_K[3][10] =
 {
     {0, 2.5173462e1, -1.1662878, -1.0833638, -8.9773540/1e1, -3.7342377/1e1,
     -8.6632643/1e2, -1.0450598/1e2, -5.1920577/1e4},
@@ -171,6 +171,7 @@ void PVFM_Temp::setTemp(int tpr)                           // set temperature
     temp_set    = tpr;
     temp_set_2  = (tpr-50)/5;
     temp_set_2  = temp_2_analog[temp_set_2];
+    //P_DTA.set_temps(tpr);
 }
 
 void PVFM_Temp::makeArray()
@@ -252,7 +253,8 @@ float PVFM_Temp::get_kt(int inx)
     if(inx >= NUM_SENSOR) return 0;
     float vol = (float)average[inx]/1023.0*(float)V_ref - BiasVol;
     float temp = K_VtoT(vol/Av_Amplifer) + __temp_n;
-    
+
+    //P_DTA.set_tempn(temp);
     return temp;
 }
 

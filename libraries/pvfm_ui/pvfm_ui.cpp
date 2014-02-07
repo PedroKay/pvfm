@@ -31,16 +31,12 @@ void pvfm_ui::updateValue()
 {
     int yoffset = 20;
 
-    for(int i=0; i<4; i++)
-    {
-        Tft.drawNumber(value[i], 120, 64*i+yoffset, 3, make_color(0, 0, 0));
-    }
-}
-
-void pvfm_ui::setTempNow(int tpn)                                               // set temprature now
-{
-    temp_now_buf = value[1];
-    value[1] = tpn;
+    Tft.drawNumber(value[0], 120, 64*0+yoffset, 3, make_color(0, 0, 0));
+    Tft.drawNumber(value[2], 120, 64*2+yoffset, 3, make_color(0, 0, 0));
+    Tft.drawNumber(value[3], 120, 64*3+yoffset, 3, make_color(0, 0, 0));
+    
+    int clr = make_color(COLOR_TEMP_NOW_R, COLOR_TEMP_NOW_G, COLOR_TEMP_NOW_B);
+    dispNum(value[1], -1, 120, 64+20, 3, make_color(0, 0, 0), clr);
 }
 
 unsigned char pvfm_ui::updateTemp()                                             // refresh temperature
@@ -48,6 +44,21 @@ unsigned char pvfm_ui::updateTemp()                                             
     int clr = make_color(COLOR_TEMP_NOW_R, COLOR_TEMP_NOW_G, COLOR_TEMP_NOW_B);
     dispNum(value[1], temp_now_buf, 120, 64+20, 3, make_color(0, 0, 0), clr);
 }
+
+
+void pvfm_ui::setTempNow(int tpn)                                               // set temprature now
+{
+    temp_now_buf = value[1];
+    value[1] = tpn;
+}
+
+void pvfm_ui::setTempNow()
+{
+    temp_now_buf = value[1];
+    value[1] = P_DTA.get_tempn();
+}
+
+
 
 void pvfm_ui::normalPage()
 {
@@ -76,7 +87,6 @@ int pvfm_ui::getVal(int wh_val)
     return value[wh_val];
 }
 
-
 void pvfm_ui::setValue(int val, int which_val)                                   // set value
 {
     if(which_val > 3 || which_val < 0)return;
@@ -88,7 +98,6 @@ void pvfm_ui::setValue(int val, int which_val)                                  
     else if(which_val == 3)P_DTA.set_time2(val);
     
 }
-
 
 unsigned int pvfm_ui::make_color(unsigned char r, unsigned char g, unsigned char b)
 {

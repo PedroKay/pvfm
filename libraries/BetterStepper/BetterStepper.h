@@ -57,6 +57,8 @@ class BetterStepper {
 
     // mover method:
     void step(int number_of_steps);
+    
+    void step(int number_of_steps, int (*fun)());
 
     int version(void);
 

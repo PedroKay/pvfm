@@ -3,6 +3,7 @@
 #include <Streaming.h>
 #include <EEPROM.h>
 #include "pvfm_temp.h"
+#include "pvfm_dta.h"
 
 
 void setup()

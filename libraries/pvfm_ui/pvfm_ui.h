@@ -36,7 +36,8 @@ public:
     unsigned char updateTemp();                                             // refresh temperature
     
     void normalPage();                                                      // normal page
-    void setTempNow(int tpn);                                               // set temprature now
+    void setTempNow(int tpn);                                               // set temperature now
+    void setTempNow();                                                      // get temperature now from pvfm_dta
     
     void setValue(int val, int which_val);                                  // set value
     int getVal(int wh_val);                                                 // get value
