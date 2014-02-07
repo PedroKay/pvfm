@@ -96,9 +96,9 @@ void loop()
         }
 
         cout << step_ << endl;
-        
+
         move(step_);
-        
+
         cout << "run over" << endl;
     }
 

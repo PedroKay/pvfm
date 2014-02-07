@@ -98,6 +98,54 @@ void stepper_4wd::step(int steps_to_move)
   
 }
 
+
+
+void stepper_4wd::step(int steps_to_move,  int (*fun)())
+{
+  int steps_left = abs(steps_to_move);  // how many steps to take
+  int steps_orig = steps_left;
+  int steps_buffer = SPD_BUFF_STEPS;
+  
+  if (steps_orig < steps_buffer*2)
+    steps_buffer = steps_left/2;
+  
+  float delays = this->delay_start_speed;
+  float delay_minus = (delays - this->delay_max_speed)/SPD_BUFF_STEPS;
+  
+  // determine direction based on whether steps_to_mode is + or -:
+  if (steps_to_move > 0) {this->direction = 1;}
+  if (steps_to_move < 0) {this->direction = 0;}
+    
+  // decrement the number of steps, moving one step each time:
+  while(steps_left > 0) {
+  
+    if(fun())return;
+    
+    delayMicroseconds(delays);
+    if (this->direction == 1) {
+      this->step_number++;
+      if (this->step_number == this->number_of_steps) {
+        this->step_number = 0;
+      }
+    } 
+    else { 
+      if (this->step_number == 0) {
+        this->step_number = this->number_of_steps;
+      }
+      this->step_number--;
+    }
+    // decrement the steps left:
+    steps_left--;
+    if ((steps_orig - steps_left) <= steps_buffer)
+      delays -= delay_minus;
+    else if (steps_left <= steps_buffer)
+        delays += delay_minus;
+    
+    // step the motor to step number 0, 1, 2, or 3:
+    stepMotor(this->step_number % 4);
+  }
+  
+}
 /*
  * Moves the motor forward or backwards.
  */

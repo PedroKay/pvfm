@@ -15,6 +15,7 @@ class stepper_4wd {
 
     // mover method:
     void step(int number_of_steps);
+    void step(int steps_to_move,  int (*fun)());
 
   private:
     void stepMotor(int this_step);

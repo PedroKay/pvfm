@@ -12,40 +12,10 @@
 
 #define ADDR_I2C_SLAVE          19
 
-const int stepsPerRevolution = 200;
-const int stepPerHole = 5; // = 9deg/1.8deg, 9deg = 360deg/40teeth
-
-// initialize the stepper library on pins 8 through 11:
-stepper_4wd stepperCut(stepsPerRevolution);
 
 char dtaI2C[20];
 int dtaLen  = 0;
 bool dtaGet = 0;
-
-
-void motor_init()
-{
-    pinMode(9, OUTPUT);
-    pinMode(10, OUTPUT);
-
-    // pwm set
-    PWM.init(); //FREQPWM
-    PWM.setPwm(9, 1, FREQPWM);
-    PWM.setPwm(10, 1, FREQPWM);
-
-    stepperCut.setSpeed(100, 200);
-}
-
-
-void move(int __step)
-{
-    digitalWrite(9, HIGH);
-    digitalWrite(10, HIGH);
-    stepperCut.step(__step);
-
-    PWM.setPwm(9, 1, FREQPWM);
-    PWM.setPwm(10, 1, FREQPWM);
-}
 
 
 void setup()
@@ -62,12 +32,13 @@ void setup()
     Wire.onRequest(requestEvent);                       // register event
 }
 
-
 long timer1 = 0;
+
 
 void loop()
 {
     delay(1);
+
 }
 
 void receiveEvent(int howMany)
@@ -89,7 +60,6 @@ void requestEvent()
 
     if(dtaGet)
     {
-    
         if(dtaI2C[0] == 't');
         {
             char str_[10];

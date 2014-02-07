@@ -82,5 +82,7 @@ class BetterStepper {
     long last_step_time;      // time stamp in ms of when the last step was taken
 };
 
+
+
 #endif
 
