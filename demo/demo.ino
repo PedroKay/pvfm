@@ -8,11 +8,11 @@
 #include <MsTimer2.h>
 #include <pvfm_dta.h>
 #include <Wire.h>
+#include <dbg_lvc.h>
 
 #include "pvfm_ui.h"
 #include "pvfm_ui_dfs.h"
 //#include "pvfm_temp.h"
-
 
 #define ADDR_I2C_SLAVE          19
 
@@ -22,6 +22,37 @@ void write_cmd_get_temp()
     Wire.beginTransmission(ADDR_I2C_SLAVE); // transmit to device #4
     Wire.write("t\r\n");        // sends five bytes             // sends one byte
     Wire.endTransmission();    // stop transmitting
+}
+
+bool getAck()           // get "OK" from slave
+{
+
+    Wire.requestFrom(ADDR_I2C_SLAVE, 4);
+    
+    char dtaI2C[10];
+    char dtaLen     = 0;
+    
+    long timer_out = millis();
+    while(1)
+    {
+    
+        while(Wire.available())             // slave may send less than requested
+        {
+            char c = Wire.read();           // receive a byte as character
+            Serial.print(c);                // print the character
+            dtaI2C[dtaLen++] = c;
+            if(dtaI2C[dtaLen-1] == '\n')
+            {
+                if(dtaI2C[0] == 'O' && dtaI2C[1] == 'K')
+                {
+                    cout << "set ok" << endl;
+                    return 1;
+                }
+            }
+        }
+        
+        if(millis()-timer_out > 5000)return 0;
+    }
 }
 
 void write_cmd_set_temp(int temp)
@@ -46,31 +77,44 @@ void write_cmd_set_temp(int temp)
     Wire.write(str);        
     Wire.endTransmission(); 
     
-    
-    Wire.requestFrom(ADDR_I2C_SLAVE, 4);
-    
-    char dtaI2C[10];
-    char dtaLen     = 0;
-    
-    while(1)
+    if(getAck())
     {
-    
-        while(Wire.available())             // slave may send less than requested
-        {
-            char c = Wire.read();           // receive a byte as character
-            Serial.print(c);                // print the character
-            dtaI2C[dtaLen++] = c;
-            if(dtaI2C[dtaLen-1] == '\n')
-            {
-                if(dtaI2C[0] == 'O' && dtaI2C[1] == 'K')
-                {
-                    cout << "set ok" << endl;
-                    return;
-                }
-            }
-        }
+        cout << "write cmd ok" << endl;
     }
     
+}
+
+void write_cmd_step(int step)
+{
+    if(step<-999 || step>999)return;
+    char str[10];
+    
+    str[0] = step >= 0 ? 'u' : 'd';          // start with u(up) or d(down)
+    
+    step = abs(step);
+    if(step<10)
+    {
+        sprintf(&str[1], "00%d\r\n", step);
+    }
+    else if(step<100)
+    {
+        sprintf(&str[1], "0%d\r\n", step);
+    }
+    else if(step<1000)
+    {
+        sprintf(&str[1], "%d\r\n", step);
+    }
+    
+    Wire.beginTransmission(ADDR_I2C_SLAVE);             // transmit to device #4
+    Wire.write(str);        
+    Wire.endTransmission(); 
+    
+    if(getAck())
+    {
+        cout << "write cmd ok" << endl;
+    }
+    
+    // to do : get ok...
 }
 
 bool getTemp_I2C(int *dta)
@@ -119,6 +163,8 @@ void setConfigValue(int item, int val)
 void setup()
 {
     Serial.begin(115200);
+    DBG.init();
+    
     cout << "hello world" << endl;
 
     UI.begin();
@@ -139,6 +185,8 @@ void loop()
 {
 
     int item = UI.getTouchItem();
+    
+    DBG.timer_isr_dbg_lvc();
 
     if(item > 0)
     {
@@ -159,6 +207,19 @@ void loop()
         {
             UI.setTempNow(tp);
             UI.updateTemp();
+        }
+    }
+    
+    
+    
+    if(DBG.isGetNum())
+    {
+        long num = 0;
+        
+        if(DBG.getNum(&num))
+        {
+            cout << "step = " << num << endl;
+            write_cmd_step(num);
         }
     }
 
