@@ -101,22 +101,11 @@ void PVFM_Temp::__timer_isr()
     {
         flg_heat[choose_k_cnt] = 1;
         digitalWrite(__pin_ssr[choose_k_cnt], HIGH);
-
-        //cout << "pin = " << __pin_ssr[choose_k_cnt] << endl;
-        //cout << "average[" << choose_k_cnt << "] =" << average[choose_k_cnt] << '\t';
-        //cout << "temp_set_2 = " << temp_set_2 << endl;
-        //cout << "ssr" << choose_k_cnt << " on" << endl;
-        //cout << "on" << endl;
     }
     else if(flg_heat[choose_k_cnt] == 1 && average[choose_k_cnt] >= (temp_set_2-2))              // 5
     {
         flg_heat[choose_k_cnt] = 0;
         digitalWrite(__pin_ssr[choose_k_cnt], LOW);
-        
-        //cout << "average[" << choose_k_cnt << "] =" << average[choose_k_cnt] << '\t';
-        //cout << "temp_set_2 = " << temp_set_2 << endl;
-
-        //Serial.println("off");
     }
 }
 

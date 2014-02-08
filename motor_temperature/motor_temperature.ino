@@ -25,7 +25,7 @@ void setup()
     cout << "hello world" << endl;
 
     ptp.begin();
-    ptp.setTemp(450);
+    ptp.setTemp(100);
 
     Wire.begin(ADDR_I2C_SLAVE);                         // join i2c bus with address #4
     Wire.onReceive(receiveEvent);                       // register event
@@ -60,7 +60,7 @@ void requestEvent()
 
     if(dtaGet)
     {
-        if(dtaI2C[0] == 't');
+        if(dtaI2C[0] == 't')
         {
             char str_[10];
             int t  = ptp.get_kt(0);
@@ -73,8 +73,16 @@ void requestEvent()
             sprintf(str_, "%d\r\n", t);
 
             Wire.write(str_);
-            
             Serial.print(str_);
+        }
+        else if( dtaI2C[0] == 's' && dtaLen == 6 )
+        {
+            int num = 100*(dtaI2C[1]-'0') + 10*(dtaI2C[2]-'0') + 1*(dtaI2C[3]-'0');
+            
+            cout << "set temperature: " << num << endl;
+            ptp.setTemp(num);
+            
+            Wire.write("OK\r\n");
         }
         
         dtaGet = 0;
