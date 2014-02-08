@@ -3,11 +3,16 @@
 #include <BetterStepper.h>
 #include <Arduino.h>
 
+
+
+
 #include "pvfm_motor_ctrl.h"
 
 #define STEP_LOCA_UP            1
 #define STEP_LOCA_DOWN          2
 #define STEP_LOCA_MID           0
+
+#define MAX_STEP                5000
 
 const int pinUp   = 2;              // pin connect
 const int pinDown = 3;
@@ -75,7 +80,7 @@ void pvfm_motor_ctrl::moveUp()
 {
     if(isUp())return;
 
-    int __step = 10000;
+    int __step = MAX_STEP;
     
     digitalWrite(9, HIGH);
     digitalWrite(10, HIGH);
@@ -88,9 +93,9 @@ void pvfm_motor_ctrl::moveUp()
 
 void pvfm_motor_ctrl::moveDown()
 {
-    if(isUp())return;
+    if(isDown())return;
 
-    int __step = -10000;
+    int __step = (int)MAX_STEP*-1;
     
     digitalWrite(9, HIGH);
     digitalWrite(10, HIGH);

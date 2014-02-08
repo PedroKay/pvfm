@@ -45,7 +45,7 @@
 
 #define EEPROM_ADDR_START   200
 
-#define NUM_SENSOR      3
+#define NUM_SENSOR      1
 
 class PVFM_Temp{
 

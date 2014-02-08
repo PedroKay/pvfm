@@ -36,9 +36,9 @@
 #define __PIN_K1    A2
 #define __PIN_K2    A3
 
-#define __PIN_SSR0   2
-#define __PIN_SSR1   2
-#define __PIN_SSR2   2
+const  int __PIN_SSR0   = 11;
+const  int __PIN_SSR1   = 12;
+const  int __PIN_SSR2   = 12;
 
 const float Var_VtoT_K[3][10] =
 {
@@ -97,25 +97,26 @@ void PVFM_Temp::__timer_isr()
 
     pushDta(choose_k_cnt);
     
-    if(flg_heat[choose_k_cnt] == 0 && average[choose_k_cnt] < (temp_set_2-3))
+    if(flg_heat[choose_k_cnt] == 0 && average[choose_k_cnt] <=(temp_set_2-3))                   // 7
     {
         flg_heat[choose_k_cnt] = 1;
         digitalWrite(__pin_ssr[choose_k_cnt], HIGH);
 
-        cout << "average[" << choose_k_cnt << "] =" << average[choose_k_cnt] << '\t';
-        cout << "temp_set_2 = " << temp_set_2 << endl;
-
-        Serial.println("ssr on");
+        //cout << "pin = " << __pin_ssr[choose_k_cnt] << endl;
+        //cout << "average[" << choose_k_cnt << "] =" << average[choose_k_cnt] << '\t';
+        //cout << "temp_set_2 = " << temp_set_2 << endl;
+        //cout << "ssr" << choose_k_cnt << " on" << endl;
+        //cout << "on" << endl;
     }
-    else if(flg_heat[choose_k_cnt] == 1 && average[choose_k_cnt] > (temp_set_2+3))
+    else if(flg_heat[choose_k_cnt] == 1 && average[choose_k_cnt] >= (temp_set_2-2))              // 5
     {
         flg_heat[choose_k_cnt] = 0;
         digitalWrite(__pin_ssr[choose_k_cnt], LOW);
         
-        cout << "average[" << choose_k_cnt << "] =" << average[choose_k_cnt] << '\t';
-        cout << "temp_set_2 = " << temp_set_2 << endl;
+        //cout << "average[" << choose_k_cnt << "] =" << average[choose_k_cnt] << '\t';
+        //cout << "temp_set_2 = " << temp_set_2 << endl;
 
-        Serial.println("ssr off");
+        //Serial.println("off");
     }
 }
 
@@ -127,6 +128,8 @@ void PVFM_Temp::begin()
         index[i]       = 0;                         // the index of the current reading
         total[i]       = 0;                         // the running total
         average[i]     = 0;                         // the average
+        
+        flg_heat[i]    = 0;
     }
     temp_set    = 0;                                // default value: 0oC
     temp_set_2  = temp_2_analog[0];
@@ -140,12 +143,14 @@ void PVFM_Temp::begin()
     __pin_ssr[1] = __PIN_SSR1;
     __pin_ssr[2] = __PIN_SSR2;
     
+    cout << "xxx__pin_ssr[0] = " << __pin_ssr[0] << endl;
+    
     for(int i=0; i<3; i++)
     {
         pinMode(__pin_ssr[i], OUTPUT);
         digitalWrite(__pin_ssr[i], LOW);
-        flg_heat[i] = 0;
     }
+    
     
     initDta();
 
@@ -162,6 +167,8 @@ void PVFM_Temp::begin()
 
     cout << "__temp_nxxx = " << __temp_n << endl;
 
+    cout << "xxx__pin_ssr[0] = " << __pin_ssr[0] << endl;
+    
     MsTimer2::set(5, timer3_isr); // 500ms period
     MsTimer2::start();
 }
@@ -238,7 +245,7 @@ int PVFM_Temp::getAnalog(int pin)                         // return button state
 // init buff
 void PVFM_Temp::initDta()
 {
-    for(int i=0; i<3; i++)
+    for(int i=0; i<NUM_SENSOR; i++)
     {
         for(int j=0; j<numReadings; j++)
         {

@@ -25,7 +25,7 @@ void setup()
     cout << "hello world" << endl;
 
     ptp.begin();
-    ptp.setTemp(100);
+    ptp.setTemp(450);
 
     Wire.begin(ADDR_I2C_SLAVE);                         // join i2c bus with address #4
     Wire.onReceive(receiveEvent);                       // register event
@@ -51,7 +51,7 @@ void receiveEvent(int howMany)
             dtaGet = 1;
         }
         
-        Serial.write(dtaI2C[dtaLen-1]);
+        //Serial.write(dtaI2C[dtaLen-1]);
     }
 }
 
@@ -68,7 +68,7 @@ void requestEvent()
             if(t<10)
             sprintf(str_, "00%d\r\n", t);
             else if(t<100)
-            sprintf(str_, "0%d\r\nt", t);
+            sprintf(str_, "0%d\r\n", t);
             else
             sprintf(str_, "%d\r\n", t);
 
