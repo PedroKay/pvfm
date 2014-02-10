@@ -12,151 +12,139 @@
 
 #include "pvfm_ui.h"
 #include "pvfm_ui_dfs.h"
-//#include "pvfm_temp.h"
 
 #define ADDR_I2C_SLAVE          19
 
-// send a 't' to request temperature
-void write_cmd_get_temp()
-{
-    Wire.beginTransmission(ADDR_I2C_SLAVE); // transmit to device #4
-    Wire.write("t\r\n");        // sends five bytes             // sends one byte
-    Wire.endTransmission();    // stop transmitting
-}
+#define isNum(num)              (num>='0' && num<='9')
 
-bool getAck()           // get "OK" from slave
-{
+// FBTYPE
+#define CMD_TYPE_GET            0
+#define CMD_TYPE_SET            1
 
-    Wire.requestFrom(ADDR_I2C_SLAVE, 4);
-    
+// cmd return
+#define CMD_RETURN_TIMEOUT      0       // timeout
+#define CMD_RETURN_OK           1       // get data ok
+#define CMD_RETURN_ERRINPUT     2
+#define CMD_RETURN_ERRDATA      3
+#define CMD_RETURN_TOOLONG      4
+
+// some command
+#define CMD_GET_TEMP            't'     // get temperature sensor from slave
+#define CMD_SET_TEMP            's'     // set temperature
+#define CMD_STEP_UP             'u'     // step move up
+#define CMD_STEP_DOWN           'd'     // step move down
+
+
+// write command and get feedback
+// cmd - command
+// *dta - data return if cmdtype = CMD_TYPE_GET
+// cmdtype - feedback type, a num or "ok"
+int write_cmd_get_fb(char cmd, int *dta, unsigned char cmdtype)
+{
     char dtaI2C[10];
-    char dtaLen     = 0;
-    
+    char dtaLen = 0;
+
+    if(dta == NULL)return CMD_RETURN_ERRINPUT;
+    if(cmdtype != CMD_TYPE_GET || cmdtype != CMD_TYPE_SET)return CMD_RETURN_ERRINPUT;
+
+    if(cmdtype == CMD_TYPE_SET)
+    {
+        int tmp = *dta;
+        tmp = abs(tmp);
+
+        if(*dta<10)
+        {
+            sprintf(dtaI2C, "%c00%d\r\n", cmd, *dta);
+        }
+        else if(*dta<100)
+        {
+            sprintf(dtaI2C, "%c0%d\r\n", cmd, *dta);
+        }
+        else if(*dta<1000)
+        {
+            sprintf(dtaI2C, "%c%d\r\n", cmd, *dta);
+        }
+        else return CMD_RETURN_ERRINPUT;
+    }
+    else if(cmdtype == CMD_TYPE_GET)
+    {
+        sprintf(dtaI2C, "%c\r\n", cmd);
+    }
+
+    Wire.beginTransmission(ADDR_I2C_SLAVE);
+    Wire.write(dtaI2C);
+    Wire.endTransmission();
+
+    int request_num = (CMD_TYPE_SET == cmdtype) ? 4 : 5;
+    Wire.requestFrom(ADDR_I2C_SLAVE, request_num);
+
     long timer_out = millis();
+
     while(1)
     {
-    
         while(Wire.available())             // slave may send less than requested
         {
             char c = Wire.read();           // receive a byte as character
             Serial.print(c);                // print the character
             dtaI2C[dtaLen++] = c;
+
+            if(dtaLen > 9) return CMD_RETURN_TOOLONG;
+
             if(dtaI2C[dtaLen-1] == '\n')
             {
-                if(dtaI2C[0] == 'O' && dtaI2C[1] == 'K')
-                {
-                    cout << "set ok" << endl;
-                    return 1;
-                }
+                break;
             }
         }
-        
-        if(millis()-timer_out > 5000)return 0;
+        if(dtaI2C[dtaLen-1] == '\n')break;
+        if(millis()-timer_out > 1000)return CMD_RETURN_TIMEOUT;          // time out
     }
+
+    if(dtaLen != 4 || dtaLen != 5)return CMD_RETURN_ERRDATA;
+
+    if(CMD_TYPE_SET == cmdtype && dtaLen == 4)
+    {
+        return (dtaI2C[0] == 'O' && dtaI2C[1] == 'K');
+    }
+    else if(CMD_TYPE_GET == cmdtype && dtaLen == 5)
+    {
+        if(isNum(dtaI2C[0]) && isNum(dtaI2C[1]) && isNum(dtaI2C[2]))
+        {
+            int sum = 0;
+            sum += 100*(dtaI2C[0]-'0') + 10*(dtaI2C[1]-'0') + 1*(dtaI2C[2]-'0');
+            *dta = sum;
+            return CMD_RETURN_OK;
+        }
+        else return CMD_RETURN_ERRINPUT;
+    }
+
+    return -1;
+
 }
 
 void write_cmd_set_temp(int temp)
 {
-    if(temp<0 || temp>999)return;
-    
-    char str[10];
-    if(temp<10)
-    {
-        sprintf(str, "s00%d\r\n", temp);
-    }
-    else if(temp<100)
-    {
-        sprintf(str, "s0%d\r\n", temp);
-    }
-    else
-    {
-        sprintf(str, "s%d\r\n", temp);
-    }
-    
-    Wire.beginTransmission(ADDR_I2C_SLAVE);             // transmit to device #4
-    Wire.write(str);        
-    Wire.endTransmission(); 
-    
-    if(getAck())
+    if(write_cmd_get_fb(CMD_SET_TEMP, &temp, CMD_TYPE_SET))
     {
         cout << "write cmd ok" << endl;
     }
-    
 }
 
 void write_cmd_step(int step)
 {
-    if(step<-999 || step>999)return;
-    char str[10];
+    char __cmd = step>0 ? CMD_STEP_UP : CMD_STEP_DOWN;
+    int __step = abs(step);
     
-    str[0] = step >= 0 ? 'u' : 'd';          // start with u(up) or d(down)
-    
-    step = abs(step);
-    if(step<10)
-    {
-        sprintf(&str[1], "00%d\r\n", step);
-    }
-    else if(step<100)
-    {
-        sprintf(&str[1], "0%d\r\n", step);
-    }
-    else if(step<1000)
-    {
-        sprintf(&str[1], "%d\r\n", step);
-    }
-    
-    Wire.beginTransmission(ADDR_I2C_SLAVE);             // transmit to device #4
-    Wire.write(str);        
-    Wire.endTransmission(); 
-    
-    if(getAck())
+    if(write_cmd_get_fb(__cmd, &__step, CMD_TYPE_SET))
     {
         cout << "write cmd ok" << endl;
     }
-    
-    // to do : get ok...
-}
-
-bool getTemp_I2C(int *dta)
-{
-    write_cmd_get_temp();
-
-    Wire.requestFrom(ADDR_I2C_SLAVE, 5);    // request 5 bytes from slave device #19
-
-    char dtaI2C[10];
-    char dtaLen     = 0;
-
-    int cnt_tout = 0;
-    while(1)
-    {
-        while(Wire.available())             // slave may send less than requested
-        {
-            char c = Wire.read();           // receive a byte as character
-            Serial.print(c);                // print the character
-            dtaI2C[dtaLen++] = c;
-            if(dtaI2C[dtaLen-1] == '\n')
-            {
-                int sum = 0;
-                sum += 100*(dtaI2C[0]-'0') + 10*(dtaI2C[1]-'0') + dtaI2C[2]-'0';
-                *dta = sum;
-                return 1;
-            }
-        }
-
-        delay(1);
-        cnt_tout++;
-        if(cnt_tout>100)return 0;
-    }
-    return 0;
 }
 
 void setConfigValue(int item, int val)
 {
-    if(item == 0)                       // set temperature
+    if(item == 0)                           // set temperature
     {
         write_cmd_set_temp(val);
-
-
     }
 }
 
@@ -164,64 +152,51 @@ void setup()
 {
     Serial.begin(115200);
     DBG.init();
-    
     cout << "hello world" << endl;
-
     UI.begin();
     UI.normalPage();
-
     Wire.begin();                           // join i2c bus (address optional for master)
-    
-    
     write_cmd_set_temp(P_DTA.get_temps());
 }
 
 long timer1 = 0;
 
-
-
-
 void loop()
 {
 
     int item = UI.getTouchItem();
-    
+
     DBG.timer_isr_dbg_lvc();
 
+    // get pressed
     if(item > 0)
     {
         int val_b = UI.getVal(item-1);
         val_b = UI.setNum(val_b, 10, 500);
         UI.setValue(val_b, item-1);
-        
         setConfigValue(item-1, val_b);
-
         UI.normalPage();
     }
 
+    // refresh temperature per 200ms
     if(millis()-timer1 > 200)
     {
         int tp;
-        timer1 = millis();
-        if(getTemp_I2C(&tp))
+        if(write_cmd_get_fb(CMD_GET_TEMP, &tp, CMD_TYPE_GET))            // get temperature and display
         {
             UI.setTempNow(tp);
             UI.updateTemp();
         }
     }
-    
-    
-    
+
+    // just debug, get a number from serial, and control the step
     if(DBG.isGetNum())
     {
         long num = 0;
-        
         if(DBG.getNum(&num))
         {
             cout << "step = " << num << endl;
             write_cmd_step(num);
         }
     }
-
-
 }
