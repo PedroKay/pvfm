@@ -29,9 +29,7 @@ void step_motor_init()
 {
     pinMode(9, OUTPUT);
     pinMode(10, OUTPUT);
-
-    analogWrite(3, 100);
-
+    
     // pwm set
     PWM.init(); //FREQPWM
 
