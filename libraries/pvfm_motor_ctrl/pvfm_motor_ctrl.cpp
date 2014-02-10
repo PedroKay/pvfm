@@ -80,7 +80,7 @@ void pvfm_motor_ctrl::moveUp()
 {
     if(isUp())return;
 
-    int __step = MAX_STEP;
+    int __step = 5000;
     
     digitalWrite(9, HIGH);
     digitalWrite(10, HIGH);
@@ -95,7 +95,7 @@ void pvfm_motor_ctrl::moveDown()
 {
     if(isDown())return;
 
-    int __step = (int)MAX_STEP*-1;
+    int __step = -5000;
     
     digitalWrite(9, HIGH);
     digitalWrite(10, HIGH);

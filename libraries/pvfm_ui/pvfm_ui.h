@@ -31,7 +31,7 @@ private:
 public:
 
     void begin();
-    unsigned int setNum(int num_input, int _min, int _max);                 // set number
+    unsigned int setNum(int item, int num_input, int _min, int _max);                 // set number
     unsigned char getTouchItem();
     unsigned char updateTemp();                                             // refresh temperature
     

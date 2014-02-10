@@ -204,11 +204,16 @@ void pvfm_ui::dispSetMode()
 
 }
 
+const unsigned char steps_set_num[4] = {5, 1, 1, 1};
 
-unsigned int pvfm_ui::setNum(int num_input, int _min, int _max)
+unsigned int pvfm_ui::setNum(int item, int num_input, int _min, int _max)
 {
+
+
     if(num_input < 0)return -1;
 
+    int step = steps_set_num[item];
+    
     dispSetMode();
 
     unsigned long timer_tmp = millis();
@@ -228,7 +233,7 @@ unsigned int pvfm_ui::setNum(int num_input, int _min, int _max)
         {
 
             num_buf = num_input;
-            num_input = num_input<_max ? num_input+1 : num_input;
+            num_input = num_input<_max ? num_input+step : num_input;
             dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));
 
             for(;;)
@@ -246,7 +251,7 @@ unsigned int pvfm_ui::setNum(int num_input, int _min, int _max)
                     {
                         timer_2 = millis();
                         num_buf = num_input;
-                        num_input = num_input < _max ? num_input+1 : num_input;
+                        num_input = num_input < _max ? num_input+step : num_input;
                         dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));
 
                         //speed_cnt = speed_cnt > 20 ? (speed_cnt>90 ? speed_cnt-1 : (speed_cnt > 50 ? speed_cnt-3 : speed_cnt - 5)) : speed_cnt;
@@ -264,7 +269,7 @@ unsigned int pvfm_ui::setNum(int num_input, int _min, int _max)
         else if(getTouchRect(150, 120, 230, 200))           // down
         {
             num_buf = num_input;
-            num_input = num_input>_min ? num_input-1 : num_input;
+            num_input = num_input>_min ? num_input-step : num_input;
             dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));
 
             for(;;)
@@ -282,7 +287,7 @@ unsigned int pvfm_ui::setNum(int num_input, int _min, int _max)
                     {
                         timer_2 = millis();
                         num_buf = num_input;
-                        num_input = num_input > _min ? num_input-1 : num_input;
+                        num_input = num_input > _min ? num_input-step : num_input;
                         dispNum(num_input, num_buf, SET_MODE_NUM_X, SET_MODE_NUM_Y, 4, RED, UI.make_color(255, 255, 255));
 
 

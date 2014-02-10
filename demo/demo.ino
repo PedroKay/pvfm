@@ -17,13 +17,16 @@
 
 #define isNum(num)              (num>='0' && num<='9')
 
+#define __DebigIno              1                   // if print debug
+
 // FBTYPE
 #define CMD_TYPE_GET            0
 #define CMD_TYPE_SET            1
 
 // cmd return
-#define CMD_RETURN_TIMEOUT      0       // timeout
-#define CMD_RETURN_OK           1       // get data ok
+
+#define CMD_RETURN_OK           0       // get data ok
+#define CMD_RETURN_TIMEOUT      1       // timeout
 #define CMD_RETURN_ERRINPUT     2
 #define CMD_RETURN_ERRDATA      3
 #define CMD_RETURN_TOOLONG      4
@@ -35,18 +38,59 @@
 #define CMD_STEP_DOWN           'd'     // step move down
 
 
+void printErr(int errCode)
+{
+
+#if __DebigIno
+
+    if(!errCode)
+    {
+        cout << "cmd send OK" << endl;
+        return;
+    }
+    cout << "ErrorCode: ";
+    switch(errCode)
+    {
+        case CMD_RETURN_TIMEOUT:
+        cout << "get data timeout" << endl;
+        break;
+        
+        case CMD_RETURN_ERRINPUT:
+        cout << "err input" << endl;
+        break;
+        
+        case CMD_RETURN_ERRDATA:
+        cout << "err data" << endl;
+        break;
+        
+        case CMD_RETURN_TOOLONG:
+        cout << "data too long" << endl;
+        break;
+        
+        default:
+        ;
+    }
+#endif
+}
+
+void pirntCmd(char cmd, int *dta, unsigned char cmdtype)
+{
+    
+}
+
 // write command and get feedback
 // cmd - command
 // *dta - data return if cmdtype = CMD_TYPE_GET
 // cmdtype - feedback type, a num or "ok"
 int write_cmd_get_fb(char cmd, int *dta, unsigned char cmdtype)
 {
-    char dtaI2C[10];
-    char dtaLen = 0;
 
     if(dta == NULL)return CMD_RETURN_ERRINPUT;
-    if(cmdtype != CMD_TYPE_GET || cmdtype != CMD_TYPE_SET)return CMD_RETURN_ERRINPUT;
+    if(cmdtype != CMD_TYPE_GET && cmdtype != CMD_TYPE_SET)return CMD_RETURN_ERRINPUT;
 
+    char dtaI2C[10];
+    char dtaLen = 0;
+    
     if(cmdtype == CMD_TYPE_SET)
     {
         int tmp = *dta;
@@ -96,10 +140,10 @@ int write_cmd_get_fb(char cmd, int *dta, unsigned char cmdtype)
             }
         }
         if(dtaI2C[dtaLen-1] == '\n')break;
-        if(millis()-timer_out > 1000)return CMD_RETURN_TIMEOUT;          // time out
+        if(millis()-timer_out > 5000)return CMD_RETURN_TIMEOUT;          // time out
     }
 
-    if(dtaLen != 4 || dtaLen != 5)return CMD_RETURN_ERRDATA;
+    if(dtaLen != 4 && dtaLen != 5)return CMD_RETURN_ERRDATA;
 
     if(CMD_TYPE_SET == cmdtype && dtaLen == 4)
     {
@@ -123,10 +167,8 @@ int write_cmd_get_fb(char cmd, int *dta, unsigned char cmdtype)
 
 void write_cmd_set_temp(int temp)
 {
-    if(write_cmd_get_fb(CMD_SET_TEMP, &temp, CMD_TYPE_SET))
-    {
-        cout << "write cmd ok" << endl;
-    }
+    int err = write_cmd_get_fb(CMD_SET_TEMP, &temp, CMD_TYPE_SET);
+    printErr(err);
 }
 
 void write_cmd_step(int step)
@@ -134,10 +176,8 @@ void write_cmd_step(int step)
     char __cmd = step>0 ? CMD_STEP_UP : CMD_STEP_DOWN;
     int __step = abs(step);
     
-    if(write_cmd_get_fb(__cmd, &__step, CMD_TYPE_SET))
-    {
-        cout << "write cmd ok" << endl;
-    }
+    int err = write_cmd_get_fb(__cmd, &__step, CMD_TYPE_SET);
+    printErr(err);
 }
 
 void setConfigValue(int item, int val)
@@ -172,7 +212,8 @@ void loop()
     if(item > 0)
     {
         int val_b = UI.getVal(item-1);
-        val_b = UI.setNum(val_b, 10, 500);
+        val_b = UI.setNum(item-1, val_b, 10, 500);
+        
         UI.setValue(val_b, item-1);
         setConfigValue(item-1, val_b);
         UI.normalPage();
@@ -181,8 +222,13 @@ void loop()
     // refresh temperature per 200ms
     if(millis()-timer1 > 200)
     {
+        timer1 = millis();
         int tp;
-        if(write_cmd_get_fb(CMD_GET_TEMP, &tp, CMD_TYPE_GET))            // get temperature and display
+        int err = write_cmd_get_fb(CMD_GET_TEMP, &tp, CMD_TYPE_GET);
+        
+        printErr(err);
+        
+        if(!err)            // get temperature and display
         {
             UI.setTempNow(tp);
             UI.updateTemp();

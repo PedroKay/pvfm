@@ -38,7 +38,7 @@
 
 const  int __PIN_SSR0   = 11;
 const  int __PIN_SSR1   = 12;
-const  int __PIN_SSR2   = 12;
+const  int __PIN_SSR2   = 13;
 
 const float Var_VtoT_K[3][10] =
 {

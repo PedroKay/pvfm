@@ -85,7 +85,7 @@ void receiveEvent(int howMany)
             dtaGet = 1;
         }
         
-        //Serial.write(dtaI2C[dtaLen-1]);
+        Serial.write(dtaI2C[dtaLen-1]);
     }
 }
 
@@ -117,6 +117,11 @@ void requestEvent()
         {
             char str_[10];
             int t  = ptp.get_kt(0);
+            int t1 = ptp.get_kt(1);
+            int t2 = ptp.get_kt(2);
+            
+            cout << t << '\t' << t1 << '\t' << t2 << endl;
+            
             //cout << "temperature = " << t << endl;
             if(t<10)
             sprintf(str_, "00%d\r\n", t);
@@ -126,7 +131,7 @@ void requestEvent()
             sprintf(str_, "%d\r\n", t);
 
             Wire.write(str_);
-            Serial.print(str_);
+            //Serial.print(str_);
         }
         else if( dtaI2C[0] == 's' && dtaLen == 6 )
         {
