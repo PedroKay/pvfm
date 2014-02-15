@@ -76,28 +76,6 @@ void pvfm_ui::dispAddMinus(int x, int y, unsigned int color)
 void pvfm_ui::normalPage()
 {
 
-/*
-    int color_g = make_color(COLOR_TEMP_SET_R, COLOR_TEMP_SET_G, COLOR_TEMP_SET_B);
-    Tft.fillRectangle(LOCA_TEMP_SET_X, LOCA_TEMP_SET_Y, 240, 64, color_g);
-
-    color_g = make_color(COLOR_TEMP_NOW_R, COLOR_TEMP_NOW_G, COLOR_TEMP_NOW_B);
-    Tft.fillRectangle(LOCA_TEMP_NOW_X, LOCA_TEMP_NOW_Y, 240, 64, color_g);
-
-    color_g = make_color(COLOR_TIME1_R, COLOR_TIME1_G, COLOR_TIME1_B);
-    Tft.fillRectangle(LOCA_TIME1_X, LOCA_TIME1_Y, 240, 64, color_g);
-
-    color_g = make_color(COLOR_TIME2_R, COLOR_TIME2_G, COLOR_TIME2_B);
-    Tft.fillRectangle(LOCA_TIME2_X, LOCA_TIME2_Y, 240, 64, color_g);
-
-    color_g = make_color(COLOR_STATUS_R, COLOR_STATUS_G, COLOR_STATUS_B);
-    Tft.fillRectangle(LOCA_STATUS_X, LOCA_STATUS_Y, 240, 64, color_g);
-
-    updateValue();
-*/
-
-    // UI V2.0 here
-
-    
     unsigned int color_x[3][9] = 
     {
         {
@@ -124,42 +102,70 @@ void pvfm_ui::normalPage()
     unsigned int startY[]  = {1, 6, 74, 79};
     unsigned char startY_Y[] = {0, 80, 160, 240};
     
-/*
-    for(int m=0; m<3; m++)
-    {
-        for(int i=0; i<3; i++)
-        {
-            for(int j=0; j<3; j++)
-            {
-                Tft.fillScreen(startX[2*i], startX[2*i+1]-1, startY_Y[m]+startY[j], startY_Y[m]+startY[j+1]-1, color_x[m][3*j+i]);
-                
-               // delay(500);
-            }
-        }
-    }
-    */
     
+    /*
     for(int i=0; i<3; i++)
     {
         for(int j=0; j<2; j++)
         {
-            drawButton(startX[2*j+2], startY_Y[i], color_x[i][])
+            drawButton(startX[2*j+2], startY_Y[i], color_x[i][1+j], color_x[i][4+j], color_x[i][7+j], 1);
+            
+           // delay(1000);
         }
+    }*/
+    
+    
+    drawButton(0, 0, color_x[0][1], color_x[0][4], color_x[0][7], 0);
+    
+    int __st        = 0;
+    int __stbuf     = 0;
+    
+    int cnt = 0;
+    while(1)
+    {
+    
+        if(isTouch())
+        {
+            cout << "touch" << endl;
+            drawButton(0, 0, color_x[0][1], color_x[0][4], color_x[0][7], 1);
+            cnt = 0;
+            
+            long timer1 = millis();
+            
+            for(;;)
+            {
+                if(isTouch()) timer1 = millis();
+                
+                if(millis()-timer1 > 100)break;
+            }
+
+            drawButton(0, 0, color_x[0][1], color_x[0][4], color_x[0][7], 0);
+        }
+       /* else
+        {
+            cnt++;
+        }
+        
+        if(cnt)*/
     }
+    
 }
 
+
+// state: 0 unpressed, 1 pressed
 void pvfm_ui::drawButton(int x, int y, int color1, int color2, int color3, int state)
 {
 
-    unsigned char startX[0, 78];
-    unsigned char startY[0, 5, 73, 78];
+    unsigned char startX[] = {0, 58};
+    unsigned char startY[] = {0, 5, 73, 78};
     unsigned int color[3] = {color1, color2, color3};    
-    
-    Tft.fillScreen(startX[2*i], startX[2*i+1]-1, startY_Y[m]+startY[j], startY_Y[m]+startY[j+1]-1, color_x[m][3*j+i]);
+
+    unsigned int __color;
     
     for(int i=0; i<3; i++)
     {
-        Tft.fillScreen(x+startX[0], x+startX[1], y+startY[j], startY[j+1]-1, color[i]);
+        __color = state ? color[2] : color[i];
+        Tft.fillScreen(x+startX[0], x+startX[1]-1, y+startY[i], y+startY[i+1]-1, __color);
     }
 
 }
