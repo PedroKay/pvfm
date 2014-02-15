@@ -23,7 +23,6 @@ private:
     bool isTouch();
     bool getTouchRect(int XL, int YU, int XR, int YD);                                  // if certain rect get touched
     
-    
     void dispNum(int num, int num_buf, int x, int y, int size, int color, int color_bk);
     
     void updateValue();
@@ -31,8 +30,12 @@ private:
 public:
 
     void begin();
-    unsigned int setNum(int item, int num_input, int _min, int _max);                 // set number
+    unsigned int setNum(int item, int num_input, int _min, int _max);       // set number
     unsigned char getTouchItem();
+    
+    unsigned char getTouchItem2();
+    
+    
     unsigned char updateTemp();                                             // refresh temperature
     
     void normalPage();                                                      // normal page
@@ -41,6 +44,20 @@ public:
     
     void setValue(int val, int which_val);                                  // set value
     int getVal(int wh_val);                                                 // get value
+    
+    //int dispSpecialFont(int x, int y, int width, int lenght, unsigned char *dta, int color);
+    void dispAddMinus(int x, int y, unsigned int color);
+    
+    int dispSpecialFont(int x, int y, int width, int lenght, unsigned char *dta, int color_bk, int color);
+    
+    void dispSpecialBuff(const unsigned char * dta);
+    
+    void dispSpecialBuff_test();
+    
+    void setNum(int item);
+    
+    void drawButton(int x, int y, int color1, int color2, int color3, int state);
+    
 
 };
 

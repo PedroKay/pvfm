@@ -17,42 +17,22 @@ void setup()
     UI.begin();
     
     UI.normalPage();
+
+   // UI.dispSpecialBuff_test();
  
 }
 
-long timer_tmp = 0;
 
-int st_buf = 0;
-
-int st_buf_ = 0;
-
-long timer1 = 0;
 void loop()
 {
 
-    //int a = UI.setNum(50, 40, 60);
+    int item = UI.getTouchItem2();
     
-   // cout << "num set to = " << a << endl;
-   
-    
-    int item = UI.getTouchItem();
-    
-    if(item > 0)
+    if(item)
     {
-        int val_b = UI.getVal(item-1);
-        val_b = UI.setNum(val_b, 10, 500);
-        UI.setValue(val_b, item-1);
-        UI.normalPage();
+        UI.setNum(item);
+       // cout << item << endl;
+       
+       
     }
-    
-    if(millis()-timer1 > 1000)
-    {
-        timer1 = millis();
-        int tp = 290+random(0, 20);
-        
-        UI.setTempNow(tp);
-        UI.updateTemp();
-    }
-    
-    
 }
