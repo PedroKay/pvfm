@@ -3,7 +3,7 @@
 #include <SPI.h>
 #include <EEPROM.h>
 #include <SeeedTouchScreen.h>
-
+#include <SD.h>
 #include <pvfm_dta.h>
 
 #include "pvfm_ui.h"

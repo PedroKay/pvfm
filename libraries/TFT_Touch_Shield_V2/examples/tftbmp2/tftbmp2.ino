@@ -131,7 +131,7 @@ void setup()
 
 void loop()
 {
-
+/*
     static int dirCtrl = 0;
     for(unsigned char i=0; i<__Gnfile_num; i++)
     {
@@ -154,7 +154,27 @@ void loop()
 
         delay(1000);
     }
+*/
 
+
+        bmpFile = SD.open("pfvm_1.bmp");
+        
+        if (! bmpFile)
+        {
+            Serial.println("didnt find image");
+            while (1);
+        }
+
+        if(! bmpReadHeader(bmpFile)) 
+        {
+            Serial.println("bad bmp");
+            return;
+        }
+
+        bmpdraw(bmpFile, 0, 0, 1);
+        bmpFile.close();
+
+        while(1);
 }
 
 /*********************************************/
@@ -231,6 +251,8 @@ void bmpdraw(File f, int x, int y, int dir)
             {
                 SPI.transfer(__color[m]>>8);
                 SPI.transfer(__color[m]);
+                
+                delay(10);
             }
 
             TFT_CS_HIGH;

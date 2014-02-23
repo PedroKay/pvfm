@@ -4,6 +4,10 @@
 
 #define __UIDBG     0
 
+#include <Arduino.h>
+#include <SD.h>
+#include <SPI.h>
+
 class pvfm_ui{
 
 private:
@@ -27,6 +31,19 @@ private:
     
     void updateValue();
     
+    
+    void drawButton(int x, int y, int color1, int color2, int color3, int state);
+    
+    void drawAllBtn();
+    void drawItem(int x, int y, int color1, int color2, int color3);
+    void drawStateMunu(int state);
+    
+    
+    void upDateTempS();
+    void upDateTempS2();
+    
+    void upDateTempN();
+
 public:
 
     void begin();
@@ -34,7 +51,6 @@ public:
     unsigned char getTouchItem();
     
     unsigned char getTouchItem2();
-    
     
     unsigned char updateTemp();                                             // refresh temperature
     
@@ -56,7 +72,12 @@ public:
     
     void setNum(int item);
     
-    void drawButton(int x, int y, int color1, int color2, int color3, int state);
+    
+    void modeModify();
+    
+    int isGotoModify();
+    
+    
     
     
     

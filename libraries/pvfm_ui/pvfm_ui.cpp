@@ -1,14 +1,256 @@
-
 #include <Streaming.h>
 #include <SeeedTouchScreen.h>
 #include <TFTv2.h>
 #include <SPI.h>
 #include <pvfm_dta.h>
+#include <SD.h>
+#include <Arduino.h>
 
 #include "pvfm_ui.h"
 #include "pvfm_ui_dfs.h"
 
 TouchScreen ts = TouchScreen(XP, YP, XM, YM);
+
+
+
+const int PIN_SD_CS = 4;                        // pin of sd card
+
+const long __Gnbmp_height = 320;                 // bmp hight
+const long __Gnbmp_width  = 240;                 // bmp width
+
+long __Gnbmp_image_offset  = 0;;
+
+int __Gnfile_num = 0;                           // num of file
+
+File bmpFile;
+
+#define BUFFPIXEL       60                          // must be a divisor of 240 
+#define BUFFPIXEL_X3    180                         // BUFFPIXELx3
+
+
+#define UP_DOWN     1
+#define DOWN_UP     0
+
+// dir - 1: up to down
+// dir - 2: down to up
+
+
+/*********************************************/
+// These read data from the SD card file and convert them to big endian
+// (the data is stored in little endian format!)
+
+// LITTLE ENDIAN!
+
+
+
+uint16_t read16(File f)
+{
+    uint16_t d;
+    uint8_t b;
+    b = f.read();
+    d = f.read();
+    d <<= 8;
+    d |= b;
+    return d;
+}
+
+// LITTLE ENDIAN!
+uint32_t read32(File f)
+{
+    uint32_t d;
+    uint16_t b;
+
+    b = read16(f);
+    d = read16(f);
+    d <<= 16;
+    d |= b;
+    return d;
+}
+
+
+void bmpdraw(File f, int x, int y, int dir)
+{
+
+    if(bmpFile.seek(__Gnbmp_image_offset))
+    {
+        // Serial.print("pos = ");
+        // Serial.println(bmpFile.position());
+    }
+    
+    uint32_t time = millis();
+
+    uint8_t sdbuffer[BUFFPIXEL_X3];                                         // 3 * pixels to buffer
+
+    for (int i=0; i< __Gnbmp_height; i++)
+    {
+        if(dir)
+        {
+            bmpFile.seek(__Gnbmp_image_offset+(__Gnbmp_height-1-i)*240*3);
+        }
+
+        for(int j=0; j<(240/BUFFPIXEL); j++)
+        {
+        
+            bmpFile.read(sdbuffer, BUFFPIXEL_X3);
+            uint8_t buffidx = 0;
+            int offset_x = j*BUFFPIXEL;
+            
+            unsigned int __color[BUFFPIXEL];
+            
+            for(int k=0; k<BUFFPIXEL; k++)
+            {
+                __color[k] = sdbuffer[buffidx+2]>>3;                        // read
+                __color[k] = __color[k]<<6 | (sdbuffer[buffidx+1]>>2);      // green
+                __color[k] = __color[k]<<5 | (sdbuffer[buffidx+0]>>3);      // blue
+                
+                buffidx += 3;
+            }
+
+            Tft.setCol(offset_x, offset_x+BUFFPIXEL);
+
+            if(dir)
+            {
+                Tft.setPage(i, i);
+            }
+            else
+            {
+                Tft.setPage(__Gnbmp_height-i-1, __Gnbmp_height-i-1);
+            }
+
+            Tft.sendCMD(0x2c);                                                  
+            
+            TFT_DC_HIGH;
+            TFT_CS_LOW;
+
+            for(int m=0; m < BUFFPIXEL; m++)
+            {
+                SPI.transfer(__color[m]>>8);
+                SPI.transfer(__color[m]);
+            }
+
+            TFT_CS_HIGH;
+        }
+        
+    }
+    
+    //Serial.print(millis() - time, DEC);
+    //Serial.println(" ms");
+}
+
+bool bmpReadHeader(File f) 
+{
+    // read header
+    uint32_t tmp;
+    uint8_t bmpDepth;
+    
+    if (read16(f) != 0x4D42) {
+        // magic bytes missing
+        return false;
+    }
+
+    // read file size
+    tmp = read32(f);
+    //Serial.print("size 0x");
+    //Serial.println(tmp, HEX);
+
+    // read and ignore creator bytes
+    read32(f);
+
+    __Gnbmp_image_offset = read32(f);
+    //Serial.print("offset ");
+    //Serial.println(__Gnbmp_image_offset, DEC);
+
+    // read DIB header
+    tmp = read32(f);
+    Serial.print("header size ");
+    Serial.println(tmp, DEC);
+    
+    int bmp_width = read32(f);
+    int bmp_height = read32(f);
+    
+    if(bmp_width != __Gnbmp_width || bmp_height != __Gnbmp_height)      // if image is not 320x240, return false
+    {
+        return false;
+    }
+
+    if (read16(f) != 1)
+    return false;
+
+    bmpDepth = read16(f);
+    //Serial.print("bitdepth ");
+    //Serial.println(bmpDepth, DEC);
+
+    if (read32(f) != 0) {
+        // compression not supported!
+        return false;
+    }
+
+    //Serial.print("compression ");
+    //Serial.println(tmp, DEC);
+
+    return true;
+}
+
+
+void sd_init()
+{
+    pinMode(PIN_SD_CS,OUTPUT);
+    digitalWrite(PIN_SD_CS,HIGH);
+    
+    
+    Sd2Card card;
+    card.init(SPI_FULL_SPEED, PIN_SD_CS); 
+    
+    if(!SD.begin(PIN_SD_CS))              
+    { 
+        Serial.println("failed!");
+        while(1);                               // init fail, die here
+    }
+    
+
+}
+
+
+void disp_confirm()
+{
+    bmpFile = SD.open("pfvm_1.bmp");
+    
+        if (! bmpFile)
+        {
+            Serial.println("didnt find image");
+            while (1);
+        }
+
+        if(! bmpReadHeader(bmpFile)) 
+        {
+            Serial.println("bad bmp");
+            return;
+        }
+
+        bmpdraw(bmpFile, 0, 0, 1);
+        bmpFile.close();
+}
+
+void disp_modify()
+{
+    bmpFile = SD.open("pfvm_2.bmp");
+    
+        if (! bmpFile)
+        {
+            Serial.println("didnt find image");
+            while (1);
+        }
+
+        if(! bmpReadHeader(bmpFile)) 
+        {
+            Serial.println("bad bmp");
+            return;
+        }
+
+        bmpdraw(bmpFile, 0, 0, 1);
+        bmpFile.close();
+}
+
 
 void pvfm_ui::begin()
 {
@@ -23,6 +265,9 @@ void pvfm_ui::begin()
     value[3] = P_DTA.get_time2();                    // timer2
 
     temp_now_buf = value[1];
+    
+    
+    sd_init();
 
 }
 
@@ -41,8 +286,10 @@ void pvfm_ui::updateValue()
 
 unsigned char pvfm_ui::updateTemp()                                             // refresh temperature
 {
-    int clr = make_color(COLOR_TEMP_NOW_R, COLOR_TEMP_NOW_G, COLOR_TEMP_NOW_B);
-    dispNum(value[1], temp_now_buf, 120, 64+20, 3, make_color(0, 0, 0), clr);
+
+    int clr = make_color(103, 0, 219);
+    
+    dispNum(value[1], temp_now_buf, 130, 30, 4, make_color(255, 255, 255), clr);
 }
 
 void pvfm_ui::setTempNow(int tpn)                                               // set temprature now
@@ -73,9 +320,61 @@ void pvfm_ui::dispAddMinus(int x, int y, unsigned int color)
     }
 }
 
+/*
+void pvfm_ui::updateValue()
+{
+    
+}*/
+
+void pvfm_ui::upDateTempS()
+{
+    unsigned int color_white = make_color(255, 255, 255);
+    unsigned int color[3] = {make_color(103, 0, 219), make_color(77, 79, 218), make_color(83, 162, 218)};
+    
+    dispNum(P_DTA.get_temps(), P_DTA.get_temps_buf(), 20, 43, 3, color_white, color[0]);
+}
+
+void pvfm_ui::upDateTempS2()
+{
+    unsigned int color_white = make_color(255, 255, 255);
+    unsigned int color[3] = {make_color(103, 0, 219), make_color(77, 79, 218), make_color(83, 162, 218)};
+    
+    dispNum(P_DTA.get_temps(), P_DTA.get_temps()+111, 20, 43, 3, color_white, color[0]);
+}
+
+
+
+void pvfm_ui::upDateTempN()
+{
+    unsigned int color_white = make_color(255, 255, 255);
+    unsigned int color[3] = {make_color(103, 0, 219), make_color(77, 79, 218), make_color(83, 162, 218)};
+    
+    dispNum(P_DTA.get_tempn(), P_DTA.get_tempn_buf(), 20, 43, 3, color_white, color[0]);
+}
+
 void pvfm_ui::normalPage()
 {
 
+    disp_modify();
+   // unsigned int color = make_color(255, 255, 255);
+    
+   // Tft.drawNumber(P_DTA.get_temps(), 20, 43, 3, color);
+  //  Tft.drawNumber(P_DTA.get_time1(), 20, 43+80, 3, color);
+  //  Tft.drawNumber(P_DTA.get_time2(), 20, 43+160, 3, color);
+    
+    
+    
+    unsigned int color_white = make_color(255, 255, 255);
+    unsigned int color[3] = {make_color(103, 0, 219), make_color(77, 79, 218), make_color(83, 162, 218)};
+    
+    
+    upDateTempS2();
+    
+    
+    
+    
+    
+/*
     unsigned int color_x[3][9] = 
     {
         {
@@ -103,18 +402,27 @@ void pvfm_ui::normalPage()
     unsigned char startY_Y[] = {0, 80, 160, 240};
     
     
-    /*
+    
+    
+    for(int i=0; i<3; i++)
+    {
+        drawItem(startX[0], startY_Y[i], color_x[i][0], color_x[i][3], color_x[i][6]);
+    }
+    
     for(int i=0; i<3; i++)
     {
         for(int j=0; j<2; j++)
         {
-            drawButton(startX[2*j+2], startY_Y[i], color_x[i][1+j], color_x[i][4+j], color_x[i][7+j], 1);
+            drawButton(startX[2*j+2], startY_Y[i], color_x[i][1+j], color_x[i][4+j], color_x[i][7+j], 0);
             
            // delay(1000);
         }
-    }*/
+    }
     
     
+    drawStateMunu(0);
+    
+  /*  
     drawButton(0, 0, color_x[0][1], color_x[0][4], color_x[0][7], 0);
     
     int __st        = 0;
@@ -141,16 +449,134 @@ void pvfm_ui::normalPage()
 
             drawButton(0, 0, color_x[0][1], color_x[0][4], color_x[0][7], 0);
         }
-       /* else
-        {
-            cnt++;
-        }
-        
-        if(cnt)*/
     }
-    
+    */
 }
 
+void pvfm_ui::drawAllBtn()
+{
+    unsigned int color_x[3][9] = 
+    {
+        {
+            make_color(132, 59, 253), make_color(116, 51, 213), make_color(145, 79, 253),
+            make_color(101, 10, 253), make_color(81, 8, 202), make_color(117, 35, 253), 
+            make_color(81, 8, 202), make_color(65, 6, 162), make_color(94, 28, 202), 
+        },
+        {
+            make_color(93, 127, 253), make_color(110, 140, 253), make_color(85, 112, 213),
+            make_color(53, 95, 252), make_color(75, 111, 252), make_color(42, 76, 202), 
+            make_color(43, 76, 202), make_color(59, 89, 202), make_color(34, 61, 162), 
+        },
+        {
+            make_color(51, 189, 254), make_color(51, 161, 213), make_color(92, 202, 254),
+            make_color(0, 173, 254), make_color(0, 138, 203), make_color(51, 189, 254), 
+            make_color(0, 138, 203), make_color(0, 110, 162), make_color(41, 151, 203), 
+        },
+    };
+    
+    unsigned char startX[] = {1, 118, 120, 178, 180, 238};
+    unsigned int startY[]  = {1, 6, 74, 79};
+    unsigned char startY_Y[] = {0, 80, 160, 240};
+    
+    
+    for(int i=0; i<3; i++)
+    {
+        for(int j=0; j<2; j++)
+        {
+            drawButton(startX[2*j+2], startY_Y[i], color_x[i][1+j], color_x[i][4+j], color_x[i][7+j], 0);
+            
+           // delay(1000);
+        }
+    }
+}
+
+
+int pvfm_ui::isGotoModify()
+{
+    return getTouchRect(0, 240, 239, 319);
+}
+
+
+void pvfm_ui::modeModify()
+{
+    disp_confirm();
+    
+    
+    cout << "goto modify mode" << endl;
+   // drawAllBtn();
+    
+    upDateTempS2();
+    
+    
+    while(1)
+    {
+        if(isGotoModify())
+        {
+            //delay(100);
+            
+            normalPage();
+            
+            break;
+        }
+        
+        if(getTouchRect(120, 0, 180, 80))                   // tempn -
+        {
+        
+            cout << "--" << endl;
+            int temps = P_DTA.get_temps();
+            temps -= 5;
+            
+            P_DTA.set_temps(temps);
+            
+            upDateTempS();
+            
+            long timer1 = millis();
+            while(1)
+            {
+                if(getTouchRect(120, 0, 180, 80))
+                {
+                    timer1 = millis();
+                }
+                
+                if(millis() - timer1 > 100)break;
+                
+                delay(1);              
+            }
+        }
+        
+        else if(getTouchRect(180, 0, 239, 80))              // tempn +
+        {
+        
+            cout << "++" << endl;
+            int temps = P_DTA.get_temps();
+            temps += 5;
+            
+            
+            P_DTA.set_temps(temps);
+            
+            upDateTempS();
+            
+            long timer1 = millis();
+            while(1)
+            {
+                if(getTouchRect(180, 0, 239, 80))
+                {
+                    timer1 = millis();
+                }
+                
+                if(millis() - timer1 > 100)break;
+                
+                delay(1);              
+            }
+        }
+        
+        delay(1);
+    }
+    
+    
+    
+    
+}
 
 // state: 0 unpressed, 1 pressed
 void pvfm_ui::drawButton(int x, int y, int color1, int color2, int color3, int state)
@@ -169,6 +595,44 @@ void pvfm_ui::drawButton(int x, int y, int color1, int color2, int color3, int s
     }
 
 }
+
+void pvfm_ui::drawItem(int x, int y, int color1, int color2, int color3)
+{
+
+    unsigned char startX[] = {0, 117};
+    unsigned char startY[] = {0, 5, 73, 78};
+    unsigned int color[3] = {color1, color2, color3};
+    
+    for(int i=0; i<3; i++)
+    {
+        Tft.fillScreen(x+startX[0], x+startX[1]-1, y+startY[i], y+startY[i+1]-1, color[i]);
+    }
+    
+    Tft.drawString("Target Temp",10, 5, 1, make_color(255, 255, 255));
+    
+}
+
+// state = 0 - modify
+// state = 1 - confirm
+void pvfm_ui::drawStateMunu(int state)
+{
+    int color[3] = {make_color(132, 221, 207), make_color(100, 208, 204), make_color(78, 162, 159)};
+    
+    int x = 1;
+    int y = 240;
+    
+    unsigned char startX[] = {0, 237};
+    unsigned char startY[] = {0, 5, 73, 78};
+    
+    for(int i=0; i<3; i++)
+    {
+        Tft.fillScreen(x+startX[0], x+startX[1]-1, y+startY[i], y+startY[i+1]-1, color[i]);
+    }
+    
+}
+
+
+
 
 int pvfm_ui::getVal(int wh_val)
 {
@@ -639,9 +1103,12 @@ void pvfm_ui::dispSpecialBuff(const unsigned char * dta)
             SPI.transfer(__color[m]);
         }
     }
-
-
 }
+
+
+
+
+
 
 
 pvfm_ui UI;
