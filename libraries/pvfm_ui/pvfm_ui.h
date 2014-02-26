@@ -43,6 +43,7 @@ private:
     void upDateTempS2();
     
     void upDateTempN();
+    void upDateTempN2();
 
 public:
 

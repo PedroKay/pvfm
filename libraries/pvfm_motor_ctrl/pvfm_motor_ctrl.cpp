@@ -3,9 +3,6 @@
 #include <BetterStepper.h>
 #include <Arduino.h>
 
-
-
-
 #include "pvfm_motor_ctrl.h"
 
 #define STEP_LOCA_UP            1
@@ -48,7 +45,7 @@ void pvfm_motor_ctrl::init()
     PWM.setPwm(9, 1, FREQPWM);
     PWM.setPwm(10, 1, FREQPWM);
     
-    stepperCut.setSpeed(100, 200);
+    stepperCut.setSpeed(150, 200);
 }
 
 int pvfm_motor_ctrl::getLocation()

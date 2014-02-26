@@ -18,6 +18,8 @@
 #define PIN_POSITION_UP         3
 #define PIN_POSITION_DOWN       2
 
+#define __DBG_CMD               0
+
 
 char dtaI2C[20];
 int dtaLen  = 0;
@@ -31,7 +33,7 @@ void setup()
     cout << "hello world" << endl;
 
     ptp.begin();
-    ptp.setTemp(100);
+    ptp.setTemp(20);
     
     motor.init();
 

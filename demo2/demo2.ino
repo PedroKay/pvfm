@@ -21,6 +21,7 @@
 #define isNum(num)              (num>='0' && num<='9')
 
 #define __DebigIno              1                   // if print debug
+#define __DBG_CMD               0                   // cmd dbg information
 
 // FBTYPE
 #define CMD_TYPE_GET            0
@@ -93,18 +94,18 @@ void btn_fun()
             {
                 write_cmd_step(1);
             }
+            
             state_step = 1-state_step;
             
-            cout << "write data finish" << endl;
+            //cout << "write data finish" << endl;
             while(btn_left_read())
             {
                 delay(5);
             }
             
-            cout << "btn out" << endl;
+            //cout << "btn out" << endl;
         }
     }
-    
     
     if(btn_right_read())
     {
@@ -136,7 +137,7 @@ void btn_fun()
 void printErr(int errCode)
 {
 
-#if __DebigIno
+#if __DBG_CMD
 
     if(CMD_RETURN_OK == errCode)
     {
@@ -280,6 +281,17 @@ void write_cmd_set_temp(int temp)
 {
     int err = write_cmd_get_fb(CMD_SET_TEMP, &temp, CMD_TYPE_SET);
     printErr(err);
+    
+    
+    if(CMD_RETURN_OK == err)
+    {
+        cout << "set temperature OK" << endl;
+    }
+    else
+    {
+        cout << "set temperature Nok" << endl;
+    }
+    
 }
 
 void write_cmd_step(int step)
@@ -294,6 +306,9 @@ void write_cmd_step(int step)
 void setConfigValue()
 {
     write_cmd_set_temp(P_DTA.get_temps());
+    
+    
+
 }
 
 void setup()
@@ -311,8 +326,7 @@ void setup()
     UI.normalPage();
     Wire.begin();                           // join i2c bus (address optional for master)
     
-    
-   // write_cmd_set_temp(P_DTA.get_temps());
+    write_cmd_set_temp(P_DTA.get_temps());
     
     SuctionValve.init();
     
@@ -345,17 +359,19 @@ void loop()
     if(UI.isGotoModify())
     {   
         UI.modeModify();
+        
+        setConfigValue();                 // when add i2c , it's needed
     }
     
     
     btn_fun();
     
     
-    if(millis() - timer1 > 200)
+    if(millis() - timer1 > 500)
     {
     
     
-#if 1
+#if 0
         timer1 = millis();
         
         UI.setTempNow(random(0, 300));

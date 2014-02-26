@@ -352,6 +352,15 @@ void pvfm_ui::upDateTempN()
     dispNum(P_DTA.get_tempn(), P_DTA.get_tempn_buf(), 20, 43, 3, color_white, color[0]);
 }
 
+void pvfm_ui::upDateTempN2()
+{
+    unsigned int color_white = make_color(255, 255, 255);
+    unsigned int color[3] = {make_color(103, 0, 219), make_color(77, 79, 218), make_color(83, 162, 218)};
+    
+    dispNum(P_DTA.get_tempn(), (P_DTA.get_tempn()+111), 20, 43, 3, color_white, color[0]);
+}
+
+
 void pvfm_ui::normalPage()
 {
 
@@ -369,10 +378,14 @@ void pvfm_ui::normalPage()
     
     
     upDateTempS2();
+    //upDateTempN2();
+    
+    setTempNow(value[0]+111);
     
     
+    //dispNum(P_DTA.get_tempn(), P_DTA.get_tempn()+111, 130, 30, 4, make_color(255, 255, 255), clr);
     
-    
+
     
 /*
     unsigned int color_x[3][9] = 
@@ -500,8 +513,7 @@ int pvfm_ui::isGotoModify()
 void pvfm_ui::modeModify()
 {
     disp_confirm();
-    
-    
+
     cout << "goto modify mode" << endl;
    // drawAllBtn();
     
@@ -512,10 +524,7 @@ void pvfm_ui::modeModify()
     {
         if(isGotoModify())
         {
-            //delay(100);
-            
             normalPage();
-            
             break;
         }
         
