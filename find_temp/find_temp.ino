@@ -23,10 +23,10 @@ void setup()
     
     digitalWrite(__PIN_SSR0, LOW);
     digitalWrite(__PIN_SSR1, LOW);
-    digitalWrite(__PIN_SSR1, LOW);
+    digitalWrite(__PIN_SSR2, LOW);
     
     
-    digitalWrite(__PIN_SSR0, HIGH);
+    digitalWrite(__PIN_SSR2, HIGH);
 }
 
 

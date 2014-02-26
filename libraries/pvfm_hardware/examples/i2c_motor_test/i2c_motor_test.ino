@@ -9,17 +9,19 @@ void setup()
     Serial.begin(115200);
     cout << "hello world" << endl;
     
-    cout << __LINE__ << endl;
-    cout << __LINE__ << endl;
-    
     Wire.begin();
+    
+    delay(1000);
     SuctionValve.init();
 }
 
 void loop()
 {
+    cout << "run\r\n";
     SuctionValve.run();
     delay(2000);
+    
+    cout << "stop\r\n";
     SuctionValve.stop();
     delay(2000);
 }

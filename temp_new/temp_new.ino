@@ -29,6 +29,6 @@ void loop()
     if((millis() - timer1) > 200)
     {
         timer1 = millis();
-        cout << ptp.get_kt(0) << '\t' << ptp.get_kt(1) << '\t' << ptp.get_kt(2) << endl;
+        cout << (int)ptp.get_kt(0) << '\t' << (int)ptp.get_kt(1) << '\t' << (int)ptp.get_kt(2) << endl;
     }
 }

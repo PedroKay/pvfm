@@ -58,13 +58,17 @@ public:
     
     void run()
     {
-        MotorSpeedSetAB(__SPEED, __SPEED);
+        //MotorDirectionSet(0b1010);
+        MotorSpeedSetAB(100, 100);
+        delay(10);
         MotorDirectionSet(0b1010);
     }
     
     void stop()
     {
+       // MotorDirectionSet(0b1010);
         MotorSpeedSetAB(0, 0);
+        delay(10);
         MotorDirectionSet(0b1010);
     }
 };

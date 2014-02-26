@@ -7,48 +7,22 @@
 #include <seeed_pwm.h>
 #include <stepper_4wd.h>
 #include <BetterStepper.h>
+#include <pvfm_motor_ctrl.h>
 
 #include "pvfm_temp.h"
+
 
 #define ADDR_I2C_SLAVE          19
 
 
-const int stepsPerRevolution = 200;
-const int stepPerHole = 5; // = 9deg/1.8deg, 9deg = 360deg/40teeth
-
-// initialize the stepper library on pins 8 through 11:
-stepper_4wd stepperCut(stepsPerRevolution);
+#define PIN_POSITION_UP         3
+#define PIN_POSITION_DOWN       2
 
 
 char dtaI2C[20];
 int dtaLen  = 0;
 bool dtaGet = 0;
 
-
-void step_motor_init()
-{
-    pinMode(9, OUTPUT);
-    pinMode(10, OUTPUT);
-    
-    // pwm set
-    PWM.init(); //FREQPWM
-
-
-    PWM.setPwm(9, 1, FREQPWM);
-    PWM.setPwm(10, 1, FREQPWM);
-
-    stepperCut.setSpeed(100, 200);
-}
-
-void move(int __step)
-{
-    digitalWrite(9, HIGH);
-    digitalWrite(10, HIGH);
-    stepperCut.step(__step);
-
-    PWM.setPwm(9, 1, FREQPWM);
-    PWM.setPwm(10, 1, FREQPWM);
-}
 
 void setup()
 {
@@ -59,7 +33,7 @@ void setup()
     ptp.begin();
     ptp.setTemp(100);
     
-    step_motor_init();
+    motor.init();
 
     Wire.begin(ADDR_I2C_SLAVE);                         // join i2c bus with address #4
     Wire.onReceive(receiveEvent);                       // register event
@@ -144,23 +118,33 @@ void requestEvent()
         }
         else if(dtaI2C[0] == 'u')
         {
-            int steps = calcNumFromStr(&dtaI2C[1]);
+            // int steps = calcNumFromStr(&dtaI2C[1]);
             
-            Serial.write(dtaI2C);
-            cout << "step move up " << steps << "steps" << endl;
+            // Serial.write(dtaI2C);
+            // cout << "step move up " << steps << "steps" << endl;
+            // Wire.write("OK\r\n");
+            
+            // move(steps);
+            
+            cout << "step move up" << endl;
             Wire.write("OK\r\n");
-            
-            move(steps);
+            delay(100);
+            motor.moveUp();
         }
         else if(dtaI2C[0] == 'd')
         {
-            int steps = calcNumFromStr(&dtaI2C[1]);
+            // int steps = calcNumFromStr(&dtaI2C[1]);
             
-            Serial.write(dtaI2C);
-            cout << "step move down " << steps << "steps" << endl;
+            // Serial.write(dtaI2C);
+            // cout << "step move down " << steps << "steps" << endl;
+            // Wire.write("OK\r\n");
+            
+            // move(steps*-1);
+            
+            cout << "step move down" << endl;
             Wire.write("OK\r\n");
-            
-            move(steps*-1);
+            delay(100);
+            motor.moveDown();
         }
         dtaGet = 0;
         dtaLen = 0;

@@ -14,8 +14,8 @@
 
 #define MAX_STEP                5000
 
-const int pinUp   = 2;              // pin connect
-const int pinDown = 3;
+const int pinUp   = 3;                  // pin connect
+const int pinDown = 2;
 
 const int stepsPerRevolution = 200;
 const int stepPerHole        = 5;       // = 9deg/1.8deg, 9deg = 360deg/40teeth
@@ -80,7 +80,7 @@ void pvfm_motor_ctrl::moveUp()
 {
     if(isUp())return;
 
-    int __step = 5000;
+    int __step = 15000;
     
     digitalWrite(9, HIGH);
     digitalWrite(10, HIGH);
@@ -95,7 +95,7 @@ void pvfm_motor_ctrl::moveDown()
 {
     if(isDown())return;
 
-    int __step = -5000;
+    int __step = -15000;
     
     digitalWrite(9, HIGH);
     digitalWrite(10, HIGH);
