@@ -117,7 +117,8 @@ void stepper_4wd::step(int steps_to_move,  int (*fun)())
   if (steps_to_move < 0) {this->direction = 0;}
     
   // decrement the number of steps, moving one step each time:
-  while(steps_left > 0) {
+  while(steps_left > 0) 
+  {
   
     if(fun())return;
     

@@ -41,6 +41,8 @@
 #define CMD_SET_TEMP            's'     // set temperature
 #define CMD_STEP_UP             'u'     // step move up
 #define CMD_STEP_DOWN           'd'     // step move down
+#define CMD_STEP_UP_TOP         'U'     // step move up to top
+#define CMD_STEP_DOWN_BTM       'D'     // step move down to bottom
 
 
 // pin of button
@@ -65,7 +67,6 @@ bool btn_right_read()
 {
     return (0 == digitalRead(PIN_RIGHT));
 }
-
 
 
 #define STEP_ST_UP      0
