@@ -17,6 +17,7 @@
 #include "pvfm_ui_dfs.h"
 
 #define ADDR_I2C_SLAVE          19
+#define RELAY_ADDR              0x59
 
 #define isNum(num)              (num>='0' && num<='9')
 
@@ -48,6 +49,8 @@
 // pin of button
 #define PIN_LEFT    3
 #define PIN_RIGHT   2
+
+
 
 void btn_pin_init()
 {
@@ -119,11 +122,13 @@ void btn_fun()
             
             if(state_motor_tm)
             {
-                SuctionValve.run();
+               // SuctionValve.run();
+               relay_on();
             }
             else
             {
-                SuctionValve.stop();
+               // SuctionValve.stop();
+               relay_off();
             }
             
             while(btn_right_read())
@@ -133,6 +138,21 @@ void btn_fun()
         }
     }
     
+}
+
+
+void relay_on()
+{
+    Wire.beginTransmission(RELAY_ADDR);
+    Wire.write("OO\r\n");
+    Wire.endTransmission();
+}
+
+void relay_off()
+{
+    Wire.beginTransmission(RELAY_ADDR);
+    Wire.write("CC\r\n");
+    Wire.endTransmission();
 }
 
 void printErr(int errCode)
